@@ -1,0 +1,65 @@
+# ---- 仓库总则 ----
+# 只提交"源"。所有可再生成的产物（渲染图、视频、Unity Library、APK）一律不入库。
+# 理由：产物体积是源的 300 倍以上，且回滚时应回滚源而不是产物。
+
+# ---- 内部工作区（不对外） ----
+.workbuddy/
+.cursor/
+*.log
+
+# ---- 受版权保护的参考资料，禁止入库 ----
+# ref_assets 内含第三方高达模型的 OBJ/MTL，属他人在先权利表达。
+# 本项目对外口径为"语法借用、身份原创"，该目录只作内部度量参照，不得进入任何公开仓库。
+mecha_render/ref_assets/
+# 同类内容在 M2 的参考图目录里也有一份，一并排除（见 ADR-003）
+PICO_Mecha_Starter/Docs/参照/unicorn/
+
+# ---- 预渲染产物 ----
+mecha_render/out/
+mecha_render/frames/
+mecha_render/*.mp4
+mecha_render/ffmpeg
+
+# ---- Unity 生成目录 ----
+PICO_Mecha_Starter/Library/
+PICO_Mecha_Starter/Temp/
+PICO_Mecha_Starter/Obj/
+PICO_Mecha_Starter/Build/
+PICO_Mecha_Starter/Builds/
+PICO_Mecha_Starter/Logs/
+PICO_Mecha_Starter/UserSettings/
+PICO_Mecha_Starter/out/
+PICO_Mecha_Starter/MemoryCaptures/
+PICO_Mecha_Starter/Recordings/
+
+# ---- Unity / .NET 生成文件 ----
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.apk
+*.aab
+*.mvfrm
+.vs/
+.idea/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# ---- 系统 ----
+.DS_Store
+._*
+Thumbs.db
