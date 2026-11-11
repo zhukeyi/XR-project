@@ -1,0 +1,217 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "steel_ridge.dropzone.p0.animation",
+  "status": "proposed_spec_only",
+  "frame_rate": 30,
+  "time_units": "second",
+  "angle_units": "degree",
+  "coordinate_space": "scene_components.json#coordinate_space",
+  "interpolation": "cubic_monotonic_unless_linear",
+  "root_motion_policy": {
+    "mecha.stow_to_stand": "scene-specific authored root curve",
+    "mecha.walk_cycle": "in-place; Unity route controller supplies translation and yaw",
+    "mecha.crouch_bus": "in-place root; hips translation is animated",
+    "xr_camera": "never keyed; cockpit_level only levels the rigid cockpit"
+  },
+  "clips": [
+    {
+      "clip_id": "cockpit.unlock",
+      "target_rig": "cockpit_controls",
+      "duration_s": 0.8,
+      "trigger": "input.mech_unlock completed",
+      "input_synchronized": true,
+      "tracks": [
+        {"target": "mech_unlock_pivot", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 0.45, "v": [-55.0, 0.0, 0.0]}, {"t": 0.8, "v": [-55.0, 0.0, 0.0]}]}
+      ],
+      "completion_event": "mechanical_unlocked"
+    },
+    {
+      "clip_id": "container.open",
+      "target_rig": "drop_container",
+      "duration_s": 4.8,
+      "tracks": [
+        {"target": "shell_hinge_L", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 1.6, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [0.0, 0.0, -95.0]}, {"t": 4.8, "v": [0.0, 0.0, -95.0]}]},
+        {"target": "shell_hinge_R", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 1.6, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [0.0, 0.0, 95.0]}, {"t": 4.8, "v": [0.0, 0.0, 95.0]}]},
+        {"target": "roof_hinge", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 1.8, "v": [0.0, 0.0, 0.0]}, {"t": 4.5, "v": [-100.0, 0.0, 0.0]}, {"t": 4.8, "v": [-100.0, 0.0, 0.0]}]},
+        {"target": "front_ramp_hinge", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 1.4, "v": [0.0, 0.0, 0.0]}, {"t": 3.8, "v": [90.0, 0.0, 0.0]}, {"t": 4.8, "v": [90.0, 0.0, 0.0]}]}
+      ],
+      "events": [
+        {"t": 0.20, "event": "bolt_fire", "id": "bolt_01"}, {"t": 0.38, "event": "bolt_fire", "id": "bolt_02"},
+        {"t": 0.56, "event": "bolt_fire", "id": "bolt_03"}, {"t": 0.74, "event": "bolt_fire", "id": "bolt_04"},
+        {"t": 0.92, "event": "bolt_fire", "id": "bolt_05"}, {"t": 1.10, "event": "bolt_fire", "id": "bolt_06"},
+        {"t": 1.28, "event": "bolt_fire", "id": "bolt_07"}, {"t": 1.46, "event": "bolt_fire", "id": "bolt_08"},
+        {"t": 3.8, "event": "haptic", "channel": "both", "amplitude": 0.35, "duration_s": 0.12},
+        {"t": 4.8, "event": "container_opened"}
+      ]
+    },
+    {
+      "clip_id": "mecha.hatch_open",
+      "target_rig": "mecha_793",
+      "duration_s": 2.4,
+      "tracks": [
+        {"target": "hatch_hinge_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 2.4, "v": [0.0, 90.0, 0.0]}]},
+        {"target": "hatch_hinge_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 2.4, "v": [0.0, -90.0, 0.0]}]}
+      ]
+    },
+    {
+      "clip_id": "cockpit.l0_cover",
+      "target_rig": "cockpit_controls",
+      "duration_s": 0.6,
+      "trigger": "input.l0_cover completed",
+      "input_synchronized": true,
+      "tracks": [
+        {"target": "l0_cover_hinge", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 0.6, "v": [100.0, 0.0, 0.0]}]}
+      ]
+    },
+    {
+      "clip_id": "l0.deploy",
+      "target_rig": "mecha_793",
+      "duration_s": 5.0,
+      "tracks": [
+        {"target": "l0_button_slide", "channel": "translation_m", "space": "parent_local", "keys": [{"t": 0.8, "v": [0.0, 0.0, 0.0]}, {"t": 1.0, "v": [0.0, 0.0, 0.02]}, {"t": 1.2, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "rack_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 1.2, "v": [25.0, 0.0, 0.0]}, {"t": 4.5, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "rack_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 1.2, "v": [25.0, 0.0, 0.0]}, {"t": 4.5, "v": [0.0, 0.0, 0.0]}]}
+      ],
+      "procedural_swarm": {"logical_count": 21, "near_mesh_count": 6, "spawn_start_s": 1.0, "spawn_interval_s": 0.08, "source_sockets": ["l0_exit_L", "l0_exit_R"], "initial_speed_m_per_s": 4.0, "cruise_height_m": [12.0, 40.0], "network_online_s": 5.0, "collision_physical": false},
+      "events": [{"t": 5.0, "event": "l0_network_online", "logical_nodes": 21}]
+    },
+    {
+      "clip_id": "mecha.stow_to_stand",
+      "target_rig": "mecha_793",
+      "duration_s": 6.0,
+      "transport_check_time_s": 0.0,
+      "tracks": [
+        {"target": "mecha_root", "channel": "rotation_euler_xyz_deg", "space": "scene_world", "keys": [{"t": 0.0, "v": [90.0, 0.0, 0.0]}, {"t": 1.5, "v": [75.0, 0.0, 0.0]}, {"t": 4.8, "v": [20.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "mecha_root", "channel": "translation_m", "space": "scene_world", "keys": [{"t": 0.0, "v": [-7.0, 1.55, -10.2]}, {"t": 1.5, "v": [-7.0, 1.40, -9.0]}, {"t": 4.8, "v": [-7.0, 0.15, -2.4]}, {"t": 6.0, "v": [-7.0, 0.0, -2.0]}]},
+        {"target": "cockpit_level", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [-90.0, 0.0, 0.0]}, {"t": 1.5, "v": [-75.0, 0.0, 0.0]}, {"t": 4.8, "v": [-20.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "hips", "channel": "translation_delta_m", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, -0.20, 0.0]}, {"t": 4.8, "v": [0.0, -0.10, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "hip_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [-100.0, 0.0, 0.0]}, {"t": 1.5, "v": [-80.0, 0.0, 0.0]}, {"t": 4.8, "v": [-45.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "hip_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [-100.0, 0.0, 0.0]}, {"t": 1.5, "v": [-80.0, 0.0, 0.0]}, {"t": 4.8, "v": [-45.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "knee_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [130.0, 0.0, 0.0]}, {"t": 1.5, "v": [110.0, 0.0, 0.0]}, {"t": 4.8, "v": [90.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "knee_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [130.0, 0.0, 0.0]}, {"t": 1.5, "v": [110.0, 0.0, 0.0]}, {"t": 4.8, "v": [90.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "ankle_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [-30.0, 0.0, 0.0]}, {"t": 4.8, "v": [-45.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "ankle_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [-30.0, 0.0, 0.0]}, {"t": 4.8, "v": [-45.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "shoulder_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 90.0]}, {"t": 1.5, "v": [0.0, 0.0, 70.0]}, {"t": 4.8, "v": [0.0, 0.0, 15.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "shoulder_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, -90.0]}, {"t": 1.5, "v": [0.0, 0.0, -70.0]}, {"t": 4.8, "v": [0.0, 0.0, -15.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "elbow_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [120.0, 0.0, 0.0]}, {"t": 1.5, "v": [100.0, 0.0, 0.0]}, {"t": 4.8, "v": [35.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "elbow_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [120.0, 0.0, 0.0]}, {"t": 1.5, "v": [100.0, 0.0, 0.0]}, {"t": 4.8, "v": [35.0, 0.0, 0.0]}, {"t": 6.0, "v": [0.0, 0.0, 0.0]}]}
+      ],
+      "events": [{"t": 2.0, "event": "footstep", "side": "L"}, {"t": 3.1, "event": "footstep", "side": "R"}, {"t": 6.0, "event": "stand_complete"}],
+      "geometry_assertions": ["t=0 全机运输包络合格", "全程 cockpit_level 抵消 root X，SeatAnchor 世界 up 偏差小于 2°", "t>=2.0 后脚底不得穿过地面"]
+    },
+    {
+      "clip_id": "mecha.aim_fire",
+      "target_rig": "mecha_793",
+      "duration_s": 3.2,
+      "tracks": [
+        {"target": "shoulder_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 0.8, "v": [-90.0, 0.0, 0.0]}, {"t": 1.08, "v": [-90.0, 0.0, 0.0]}, {"t": 1.16, "v": [-87.0, 0.0, 0.0]}, {"t": 1.28, "v": [-90.0, 0.0, 0.0]}, {"t": 1.34, "v": [-90.0, 0.0, 0.0]}, {"t": 1.42, "v": [-87.0, 0.0, 0.0]}, {"t": 1.60, "v": [-90.0, 0.0, 0.0]}, {"t": 3.2, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "anvil_handle_pivot", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 2.0, "v": [70.0, 0.0, 0.0]}, {"t": 2.6, "v": [0.0, 0.0, 0.0]}]}
+      ],
+      "events": [
+        {"t": 1.10, "event": "cannon_airburst", "socket": "muzzle_R", "rounds": 1, "authorization_required": true},
+        {"t": 1.35, "event": "cannon_airburst", "socket": "muzzle_R", "rounds": 1, "authorization_required": true},
+        {"t": 1.50, "event": "authorization_consumed", "authorization_id": "shift07_driver01_action01"}
+      ],
+      "preconditions": ["target_real_reviewed == true", "authorization_closed == true", "rounds_fired == 0"]
+    },
+    {
+      "clip_id": "mecha.walk_cycle",
+      "target_rig": "mecha_793",
+      "duration_s": 1.4,
+      "loop": true,
+      "root_motion": "in_place",
+      "tracks": [
+        {"target": "hip_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [-18.0, 0.0, 0.0]}, {"t": 0.35, "v": [0.0, 0.0, 0.0]}, {"t": 0.70, "v": [18.0, 0.0, 0.0]}, {"t": 1.05, "v": [0.0, 0.0, 0.0]}, {"t": 1.40, "v": [-18.0, 0.0, 0.0]}]},
+        {"target": "hip_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [18.0, 0.0, 0.0]}, {"t": 0.35, "v": [0.0, 0.0, 0.0]}, {"t": 0.70, "v": [-18.0, 0.0, 0.0]}, {"t": 1.05, "v": [0.0, 0.0, 0.0]}, {"t": 1.40, "v": [18.0, 0.0, 0.0]}]},
+        {"target": "knee_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [12.0, 0.0, 0.0]}, {"t": 0.35, "v": [28.0, 0.0, 0.0]}, {"t": 0.70, "v": [8.0, 0.0, 0.0]}, {"t": 1.05, "v": [20.0, 0.0, 0.0]}, {"t": 1.40, "v": [12.0, 0.0, 0.0]}]},
+        {"target": "knee_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [8.0, 0.0, 0.0]}, {"t": 0.35, "v": [20.0, 0.0, 0.0]}, {"t": 0.70, "v": [12.0, 0.0, 0.0]}, {"t": 1.05, "v": [28.0, 0.0, 0.0]}, {"t": 1.40, "v": [8.0, 0.0, 0.0]}]},
+        {"target": "ankle_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [6.0, 0.0, 0.0]}, {"t": 0.70, "v": [-8.0, 0.0, 0.0]}, {"t": 1.40, "v": [6.0, 0.0, 0.0]}]},
+        {"target": "ankle_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [-8.0, 0.0, 0.0]}, {"t": 0.70, "v": [6.0, 0.0, 0.0]}, {"t": 1.40, "v": [-8.0, 0.0, 0.0]}]}
+      ],
+      "events": [{"t": 0.12, "event": "footstep", "side": "R"}, {"t": 0.82, "event": "footstep", "side": "L"}],
+      "geometry_assertions": ["支撑脚世界位移不超过 0.05 m/步", "任一脚底不得穿透地面超过 0.005 m"]
+    },
+    {
+      "clip_id": "container.l1_deploy",
+      "target_rig": "drop_container",
+      "duration_s": 6.0,
+      "tracks": [
+        {"target": "l1_button_slide", "channel": "translation_m", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 0.2, "v": [0.0, 0.0, 0.02]}, {"t": 0.4, "v": [0.0, 0.0, 0.0]}]},
+        {"target": "l1_door_hinge", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.5, "v": [0.0, 0.0, 0.0]}, {"t": 3.5, "v": [-95.0, 0.0, 0.0]}, {"t": 6.0, "v": [-95.0, 0.0, 0.0]}]}
+      ],
+      "procedural_swarm": {"logical_result": "L1 online", "near_representative_count": 8, "far_expression": "instanced lights and audio", "independent_ai_per_drone": false},
+      "events": [{"t": 3.5, "event": "l1_representatives_visible"}, {"t": 6.0, "event": "l1_online"}]
+    },
+    {
+      "clip_id": "mecha.crouch_bus",
+      "target_rig": "mecha_793",
+      "duration_s": 5.0,
+      "tracks": [
+        {"target": "hips", "channel": "translation_delta_m", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [0.0, -2.05, 0.30]}, {"t": 5.0, "v": [0.0, -2.05, 0.30]}]},
+        {"target": "hip_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [-75.0, 0.0, 0.0]}, {"t": 5.0, "v": [-75.0, 0.0, 0.0]}]},
+        {"target": "hip_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [-20.0, 0.0, 0.0]}, {"t": 5.0, "v": [-20.0, 0.0, 0.0]}]},
+        {"target": "knee_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [110.0, 0.0, 0.0]}, {"t": 5.0, "v": [110.0, 0.0, 0.0]}]},
+        {"target": "knee_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [100.0, 0.0, 0.0]}, {"t": 5.0, "v": [100.0, 0.0, 0.0]}]},
+        {"target": "ankle_L", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [-35.0, 0.0, 0.0]}, {"t": 5.0, "v": [-35.0, 0.0, 0.0]}]},
+        {"target": "ankle_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [-45.0, 0.0, 0.0]}, {"t": 5.0, "v": [-45.0, 0.0, 0.0]}]},
+        {"target": "chest", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [-18.0, 0.0, 0.0]}, {"t": 5.0, "v": [-18.0, 0.0, 0.0]}]},
+        {"target": "shoulder_R", "channel": "rotation_euler_xyz_deg", "space": "bone_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 4.2, "v": [-20.0, -10.0, 45.0]}, {"t": 5.0, "v": [-20.0, -10.0, 45.0]}]},
+        {"target": "bus_handle_slider", "channel": "translation_delta_m", "space": "parent_local", "keys": [{"t": 1.0, "v": [0.0, 0.0, 0.0]}, {"t": 2.0, "v": [0.0, 0.12, 0.0]}, {"t": 5.0, "v": [0.0, 0.12, 0.0]}]}
+      ],
+      "contact_constraints": [
+        {"socket": "palm_bus_R", "target_instance": "BUS_SOCKET", "target_point_local_m": [0.0, 0.60, 0.0], "start_s": 3.8, "end_s": 5.0, "solver": "rigid_two_bone_ik_plus_shoulder", "allowed_adjustment_bones": ["shoulder_R", "elbow_R"], "max_angle_adjustment_deg": 15.0, "position_tolerance_m": 0.03, "weight_blending_on_vertices": false}
+      ],
+      "events": [{"t": 4.8, "event": "bus_handle_available"}, {"t": 5.0, "event": "crouch_contact_complete"}],
+      "geometry_assertions": ["至少一只脚保持地面接触", "palm_bus_R 与接口顶面误差不超过 0.03 m", "若接触求解失败则退回关键帧修改，不得拉长手臂网格"]
+    },
+    {
+      "clip_id": "cockpit.bus_pull_lock",
+      "target_rig": "cockpit_controls",
+      "duration_s": 2.2,
+      "trigger": "input.bus_handle sequence",
+      "input_synchronized": true,
+      "tracks": [
+        {"target": "bus_handle_pivot", "channel": "rotation_euler_xyz_deg", "space": "parent_local", "keys": [{"t": 0.0, "v": [0.0, 0.0, 0.0]}, {"t": 0.8, "v": [-45.0, 0.0, 0.0]}, {"t": 1.1, "v": [-45.0, 0.0, 0.0]}, {"t": 1.9, "v": [45.0, 0.0, 0.0]}, {"t": 2.2, "v": [45.0, 0.0, 0.0]}]}
+      ],
+      "events": [{"t": 0.8, "event": "bus_pulled"}, {"t": 1.9, "event": "bus_lock_requested"}, {"t": 2.2, "event": "bus_sequence_complete"}],
+      "input_validation": "玩家输入驱动进度；clip 仅作目标轨迹，不允许在热余量不足时绕过过热分支。"
+    },
+    {
+      "clip_id": "station.power_on",
+      "target_rig": "scene_events",
+      "duration_s": 12.0,
+      "tracks": [
+        {"target": "BUS_SOCKET", "channel": "emissive_strength", "space": "scene_world", "keys": [{"t": 0.0, "v": 0.0}, {"t": 0.8, "v": 2.0}, {"t": 12.0, "v": 2.0}]},
+        {"target": "STATION_GANTRY", "channel": "emissive_strength", "space": "scene_world", "keys": [{"t": 0.0, "v": 0.0}, {"t": 3.0, "v": 0.0}, {"t": 5.0, "v": 2.0}, {"t": 12.0, "v": 2.0}]}
+      ],
+      "events": [
+        {"t": 0.0, "event": "bus_peak_start"}, {"t": 0.8, "event": "bus_peak_end"},
+        {"t": 1.0, "event": "node_online", "id": "node_01", "instance_id": "NODE_LAMP_01"}, {"t": 2.0, "event": "node_online", "id": "node_02", "instance_id": "NODE_LAMP_02"},
+        {"t": 3.2, "event": "node_online", "id": "node_03", "instance_id": "NODE_LAMP_03"}, {"t": 4.6, "event": "node_online", "id": "node_04", "instance_id": "NODE_LAMP_04"},
+        {"t": 6.2, "event": "node_online", "id": "node_05", "instance_id": "NODE_LAMP_05"}, {"t": 8.0, "event": "node_online", "id": "node_06", "instance_id": "NODE_LAMP_06"},
+        {"t": 10.0, "event": "music_enter", "id": "theme_position_online"}, {"t": 12.0, "event": "position_online"}
+      ]
+    }
+  ],
+  "input_driven_controls": [
+    {"interaction_id": "input.l0_cover", "node": "l0_cover_hinge", "channel": "rotation_X_deg", "range": [0.0, 105.0], "completion_threshold": 95.0},
+    {"interaction_id": "input.stick_L", "node": "stick_L_pivot", "channel": "rotation_X_deg", "range": [-25.0, 25.0], "source": "left Grip plus left stick forward"},
+    {"interaction_id": "input.stick_R", "node": "stick_R_pivot", "channel": "rotation_X_deg", "range": [-25.0, 25.0], "source": "right Grip plus right stick forward"},
+    {"interaction_id": "input.mech_unlock", "node": "mech_unlock_pivot", "channel": "rotation_X_deg", "range": [-65.0, 0.0], "completion_threshold": -55.0},
+    {"interaction_id": "input.target_review", "node": "target_review_switch", "channel": "rotation_X_deg", "range": [-30.0, 30.0], "source": "pointer select plus trigger"},
+    {"interaction_id": "input.anvil_authorize", "node": "anvil_handle_pivot", "channel": "rotation_X_deg", "range": [0.0, 70.0], "completion_threshold": 65.0, "hold_s": 1.0},
+    {"interaction_id": "input.jammer_toggle", "node": "jammer_switch_pivot", "channel": "rotation_X_deg", "states": {"off": -30.0, "on": 30.0}},
+    {"interaction_id": "input.l0_release", "node": "l0_button_slide", "channel": "translation_Z_m", "completion_threshold": 0.018, "precondition": "l0_cover_angle >= 95"},
+    {"interaction_id": "input.l1_deploy", "node": "l1_button_slide", "channel": "translation_Z_m", "completion_threshold": 0.018},
+    {"interaction_id": "input.bus_handle", "node": "bus_handle_pivot", "channel": "rotation_X_deg", "sequence_deg": [-45.0, 45.0], "tolerance_deg": 5.0}
+  ],
+  "global_animation_rules": [
+    "input_synchronized=true 的 clip 以当前输入件角度续接，不得从第 0 帧反向跳变；检查点仍按给定时间直接采样",
+    "所有时间键必须非递减，末键不得晚于 clip duration",
+    "XR 头显相机与 XR Origin 不得出现在任何轨道中",
+    "任务状态未完成时不得仅靠播完动画推进玩法状态",
+    "暂停时冻结动画、程序蜂群、任务计时、触觉与事件调度",
+    "检查点恢复直接设置姿态和节点 TRS，不快速重播此前动画",
+    "所有 IK 只改变刚体骨变换，不改变顶点权重或拉伸网格"
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "steel_ridge.dropzone.p0.rig",
+  "status": "proposed_spec_only",
+  "units": "meter",
+  "angle_units": "degree",
+  "coordinate_space": "scene_components.json#coordinate_space",
+  "rigs": {
+    "mecha_793": {
+      "type": "single_armature_rigid_skin",
+      "armature_name": "SteelRidge_Rig",
+      "root_node": "mecha_root",
+      "bone_count": 18,
+      "required_exact_bone_names": ["hips", "chest", "head", "backpack", "shoulder_L", "shoulder_R", "elbow_L", "elbow_R", "hip_L", "hip_R", "knee_L", "knee_R", "ankle_L", "ankle_R", "hatch_hinge_L", "hatch_hinge_R", "rack_L", "rack_R"],
+      "rest_pose": "standing",
+      "rest_rotations_euler_xyz_deg": [0.0, 0.0, 0.0],
+      "bone_orientation": "Blender 骨局部 Y 由 head 指向 tail；roll=0；导出后重新读取矩阵核验，不直接照搬 Blender Euler。",
+      "rotation_order": "XYZ",
+      "bones": [
+        {"name": "hips", "parent": "mecha_root", "head_world_m": [0.0, 4.14, 0.0], "tail_world_m": [0.0, 4.60, 0.0], "head_parent_local_m": [0.0, 4.14, 0.0], "translation_channels": {"y_m": [-2.20, 0.20], "z_m": [-0.20, 0.45]}, "rotation_limits_xyz_deg": {"x": [-20.0, 20.0], "y": [-15.0, 15.0], "z": [-10.0, 10.0]}},
+        {"name": "chest", "parent": "hips", "head_world_m": [0.0, 5.16, 0.0], "tail_world_m": [0.0, 6.92, 0.0], "head_parent_local_m": [0.0, 1.02, 0.0], "rotation_limits_xyz_deg": {"x": [-25.0, 15.0], "y": [-20.0, 20.0], "z": [-8.0, 8.0]}},
+        {"name": "head", "parent": "chest", "head_world_m": [0.0, 6.92, 0.0], "tail_world_m": [0.0, 7.93, 0.0], "head_parent_local_m": [0.0, 1.76, 0.0], "rotation_limits_xyz_deg": {"x": [-25.0, 35.0], "y": [-60.0, 60.0], "z": [-15.0, 15.0]}},
+        {"name": "backpack", "parent": "chest", "head_world_m": [0.0, 6.20, -0.82], "tail_world_m": [0.0, 6.20, -1.30], "head_parent_local_m": [0.0, 1.04, -0.82], "rotation_limits_xyz_deg": {"x": [0.0, 0.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "shoulder_L", "parent": "chest", "head_world_m": [1.20, 6.60, 0.0], "tail_world_m": [1.67, 5.30, 0.0], "head_parent_local_m": [1.20, 1.44, 0.0], "rotation_limits_xyz_deg": {"x": [-110.0, 65.0], "y": [-35.0, 35.0], "z": [-95.0, 95.0]}},
+        {"name": "shoulder_R", "parent": "chest", "head_world_m": [-1.20, 6.60, 0.0], "tail_world_m": [-1.67, 5.30, 0.0], "head_parent_local_m": [-1.20, 1.44, 0.0], "rotation_limits_xyz_deg": {"x": [-110.0, 65.0], "y": [-35.0, 35.0], "z": [-95.0, 95.0]}},
+        {"name": "elbow_L", "parent": "shoulder_L", "head_world_m": [1.67, 5.30, 0.0], "tail_world_m": [1.67, 3.55, 0.10], "head_parent_local_m": [0.47, -1.30, 0.0], "rotation_limits_xyz_deg": {"x": [0.0, 130.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "elbow_R", "parent": "shoulder_R", "head_world_m": [-1.67, 5.30, 0.0], "tail_world_m": [-1.67, 3.55, 0.10], "head_parent_local_m": [-0.47, -1.30, 0.0], "rotation_limits_xyz_deg": {"x": [0.0, 130.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "hip_L", "parent": "hips", "head_world_m": [0.64, 4.14, 0.0], "tail_world_m": [0.64, 2.25, 0.0], "head_parent_local_m": [0.64, 0.0, 0.0], "rotation_limits_xyz_deg": {"x": [-110.0, 65.0], "y": [-12.0, 12.0], "z": [-12.0, 12.0]}},
+        {"name": "hip_R", "parent": "hips", "head_world_m": [-0.64, 4.14, 0.0], "tail_world_m": [-0.64, 2.25, 0.0], "head_parent_local_m": [-0.64, 0.0, 0.0], "rotation_limits_xyz_deg": {"x": [-110.0, 65.0], "y": [-12.0, 12.0], "z": [-12.0, 12.0]}},
+        {"name": "knee_L", "parent": "hip_L", "head_world_m": [0.64, 2.25, 0.0], "tail_world_m": [0.64, 0.62, 0.10], "head_parent_local_m": [0.0, -1.89, 0.0], "rotation_limits_xyz_deg": {"x": [0.0, 135.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "knee_R", "parent": "hip_R", "head_world_m": [-0.64, 2.25, 0.0], "tail_world_m": [-0.64, 0.62, 0.10], "head_parent_local_m": [0.0, -1.89, 0.0], "rotation_limits_xyz_deg": {"x": [0.0, 135.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "ankle_L", "parent": "knee_L", "head_world_m": [0.64, 0.62, 0.10], "tail_world_m": [0.64, 0.18, 0.72], "head_parent_local_m": [0.0, -1.63, 0.10], "rotation_limits_xyz_deg": {"x": [-50.0, 50.0], "y": [-8.0, 8.0], "z": [-12.0, 12.0]}},
+        {"name": "ankle_R", "parent": "knee_R", "head_world_m": [-0.64, 0.62, 0.10], "tail_world_m": [-0.64, 0.18, 0.72], "head_parent_local_m": [0.0, -1.63, 0.10], "rotation_limits_xyz_deg": {"x": [-50.0, 50.0], "y": [-8.0, 8.0], "z": [-12.0, 12.0]}},
+        {"name": "hatch_hinge_L", "parent": "chest", "head_world_m": [0.74, 5.40, 1.19], "tail_world_m": [0.74, 6.78, 1.19], "head_parent_local_m": [0.74, 0.24, 1.19], "rotation_limits_xyz_deg": {"x": [0.0, 0.0], "y": [0.0, 95.0], "z": [0.0, 0.0]}},
+        {"name": "hatch_hinge_R", "parent": "chest", "head_world_m": [-0.74, 5.40, 1.19], "tail_world_m": [-0.74, 6.78, 1.19], "head_parent_local_m": [-0.74, 0.24, 1.19], "rotation_limits_xyz_deg": {"x": [0.0, 0.0], "y": [-95.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "rack_L", "parent": "backpack", "head_world_m": [1.05, 5.95, -1.10], "tail_world_m": [1.05, 5.55, -1.10], "head_parent_local_m": [1.05, -0.25, -0.28], "rotation_limits_xyz_deg": {"x": [-20.0, 45.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}},
+        {"name": "rack_R", "parent": "backpack", "head_world_m": [-1.05, 5.95, -1.10], "tail_world_m": [-1.05, 5.55, -1.10], "head_parent_local_m": [-1.05, -0.25, -0.28], "rotation_limits_xyz_deg": {"x": [-20.0, 45.0], "y": [0.0, 0.0], "z": [0.0, 0.0]}}
+      ],
+      "angle_signs": {
+        "hip_flex_forward": "negative local X",
+        "knee_flex": "positive local X",
+        "shoulder_raise_forward": "negative local X",
+        "transport_shoulder_fold": {"shoulder_L": "+Z 90", "shoulder_R": "-Z 90"},
+        "hatch_open": {"hatch_hinge_L": "+Y", "hatch_hinge_R": "-Y"}
+      },
+      "sockets": [
+        {"name": "ChestSocket", "parent": "chest", "position_parent_local_m": [0.0, 0.02, 0.10], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "purpose": "cockpit_level 挂载点"},
+        {"name": "SeatAnchor", "parent": "cockpit_root", "position_parent_local_m": [0.0, 1.15, -0.10], "forward": "+Z", "purpose": "XR Origin 眼位；不得随机体尺寸缩放"},
+        {"name": "palm_bus_R", "parent": "elbow_R", "position_parent_local_m": [0.0, -1.75, 0.22], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "purpose": "右掌母线接触点"},
+        {"name": "muzzle_R", "parent": "elbow_R", "position_parent_local_m": [-0.10, -1.20, 1.15], "purpose": "30 mm 炮口与空爆射线起点"},
+        {"name": "l0_exit_L", "parent": "rack_L", "position_parent_local_m": [0.0, -0.20, -0.35], "purpose": "L0 发射起点"},
+        {"name": "l0_exit_R", "parent": "rack_R", "position_parent_local_m": [0.0, -0.20, -0.35], "purpose": "L0 发射起点"}
+      ],
+      "mesh_bindings": [
+        {"bone": "head", "components": ["mecha.head.shell", "mecha.head.sensor", "mecha.head.antenna_L", "mecha.head.antenna_R"]},
+        {"bone": "chest", "components": ["mecha.torso.chest_frame"]},
+        {"bone": "hips", "components": ["mecha.torso.waist", "mecha.torso.hips"]},
+        {"bone": "backpack", "components": ["mecha.backpack.main"]},
+        {"bone": "shoulder_L", "components": ["mecha.shoulder.armor_L", "mecha.arm.upper_L"]},
+        {"bone": "shoulder_R", "components": ["mecha.shoulder.armor_R", "mecha.arm.upper_R"]},
+        {"bone": "elbow_L", "components": ["mecha.arm.forearm_hand_L"]},
+        {"bone": "elbow_R", "components": ["mecha.arm.forearm_hand_R", "mecha.weapon.cannon_R"]},
+        {"bone": "hip_L", "components": ["mecha.leg.thigh_L"]},
+        {"bone": "hip_R", "components": ["mecha.leg.thigh_R"]},
+        {"bone": "knee_L", "components": ["mecha.leg.shin_L"]},
+        {"bone": "knee_R", "components": ["mecha.leg.shin_R"]},
+        {"bone": "ankle_L", "components": ["mecha.leg.foot_L"]},
+        {"bone": "ankle_R", "components": ["mecha.leg.foot_R"]},
+        {"bone": "hatch_hinge_L", "components": ["mecha.hatch.leaf_L"]},
+        {"bone": "hatch_hinge_R", "components": ["mecha.hatch.leaf_R"]},
+        {"bone": "rack_L", "components": ["mecha.rack.L0_L"]},
+        {"bone": "rack_R", "components": ["mecha.rack.L0_R"]}
+      ],
+      "binding_rules": {
+        "vertex_influences_exactly": 1,
+        "nonzero_weight": 1.0,
+        "weight_sum": 1.0,
+        "weight_epsilon": 0.00001,
+        "skinned_mesh_renderers": 1,
+        "multi_material": "submesh",
+        "bind_pose": "standing rest pose",
+        "vertex_storage": "bone-local vertices plus node TRS; inverse bind matrices must agree with rest heads",
+        "shape_keys": "forbidden",
+        "dual_bone_blending": "forbidden",
+        "soft_deformation_whitelist": ["hydraulic_hose", "wire_harness", "seat_belt", "flexible_boot"],
+        "soft_whitelist_p0": "全部改用分段刚性网格；不启用软变形",
+        "unweighted_vertices_allowed": 0,
+        "stray_objects_allowed": 0
+      }
+    },
+    "cockpit_controls": {
+      "type": "rigid_node_assembly_not_mecha_bones",
+      "root": "cockpit_level",
+      "nodes": [
+        {"name": "cockpit_level", "parent": "ChestSocket", "head_parent_local_m": [0.0, 0.0, 0.0], "axis": "X", "limits_deg": [-95.0, 95.0], "purpose": "抵消 mecha_root 卧姿角；只绕前后水平轴调平，不接管头显旋转"},
+        {"name": "cockpit_root", "parent": "cockpit_level", "head_parent_local_m": [0.0, 0.0, 0.0], "axis": "none", "purpose": "座舱资产原点为地板中心"},
+        {"name": "seat", "parent": "cockpit_root", "head_parent_local_m": [0.0, 0.0, -0.15], "axis": "none"},
+        {"name": "front_panel", "parent": "cockpit_root", "head_parent_local_m": [0.0, 0.50, 0.68], "axis": "none"},
+        {"name": "stick_L_pivot", "parent": "cockpit_root", "head_parent_local_m": [-0.36, 0.52, 0.32], "axis": "X", "limits_deg": [-25.0, 25.0]},
+        {"name": "stick_R_pivot", "parent": "cockpit_root", "head_parent_local_m": [0.36, 0.52, 0.32], "axis": "X", "limits_deg": [-25.0, 25.0]},
+        {"name": "mech_unlock_pivot", "parent": "cockpit_root", "head_parent_local_m": [-0.61, 0.58, 0.28], "axis": "X", "limits_deg": [-65.0, 0.0]},
+        {"name": "l0_cover_hinge", "parent": "cockpit_root", "head_parent_local_m": [-0.54, 1.03, 0.58], "axis": "X", "limits_deg": [0.0, 105.0]},
+        {"name": "l0_button_slide", "parent": "cockpit_root", "head_parent_local_m": [-0.54, 0.97, 0.57], "translation_axis": "Z", "translation_range_m": [0.0, 0.02]},
+        {"name": "target_review_switch", "parent": "cockpit_root", "head_parent_local_m": [0.0, 0.90, 0.59], "axis": "X", "limits_deg": [-30.0, 30.0]},
+        {"name": "anvil_handle_pivot", "parent": "cockpit_root", "head_parent_local_m": [0.55, 0.56, 0.30], "axis": "X", "limits_deg": [0.0, 70.0]},
+        {"name": "jammer_switch_pivot", "parent": "cockpit_root", "head_parent_local_m": [0.55, 1.10, 0.59], "axis": "X", "limits_deg": [-30.0, 30.0]},
+        {"name": "l1_button_slide", "parent": "cockpit_root", "head_parent_local_m": [-0.54, 0.77, 0.59], "translation_axis": "Z", "translation_range_m": [0.0, 0.02]},
+        {"name": "bus_handle_slider", "parent": "cockpit_root", "head_parent_local_m": [0.56, 0.45, 0.18], "translation_axis": "Y", "translation_range_m": [0.0, 0.12]},
+        {"name": "bus_handle_pivot", "parent": "bus_handle_slider", "head_parent_local_m": [0.0, 0.0, 0.0], "axis": "X", "limits_deg": [-50.0, 50.0]}
+      ],
+      "eye_interaction_constraints": {
+        "seat_surface_height_m": 0.43,
+        "eye_above_floor_m": 1.15,
+        "main_panel_distance_from_eye_m": [0.60, 0.90],
+        "physical_hand_reach_m": [0.35, 0.75],
+        "camera_near_m": 0.05,
+        "camera_far_m": 1500.0,
+        "head_pose_override_allowed": false
+      }
+    },
+    "drop_container": {
+      "type": "rigid_node_assembly",
+      "root": "container_root",
+      "nodes": [
+        {"name": "container_root", "parent": null, "head_parent_local_m": [0.0, 0.0, 0.0], "axis": "none"},
+        {"name": "shell_hinge_L", "parent": "container_root", "head_parent_local_m": [1.19, 0.30, 0.0], "axis": "Z", "limits_deg": [-100.0, 0.0]},
+        {"name": "shell_hinge_R", "parent": "container_root", "head_parent_local_m": [-1.19, 0.30, 0.0], "axis": "Z", "limits_deg": [0.0, 100.0]},
+        {"name": "roof_hinge", "parent": "container_root", "head_parent_local_m": [0.0, 3.24, -2.84], "axis": "X", "limits_deg": [-105.0, 0.0]},
+        {"name": "front_ramp_hinge", "parent": "container_root", "head_parent_local_m": [0.0, 0.30, 2.84], "axis": "X", "limits_deg": [0.0, 95.0]},
+        {"name": "l1_bay_hinge", "parent": "container_root", "head_parent_local_m": [0.0, 0.32, -1.78], "axis": "none"},
+        {"name": "l1_door_hinge", "parent": "container_root", "head_parent_local_m": [0.0, 1.13, -2.73], "axis": "X", "limits_deg": [-100.0, 0.0]}
+      ],
+      "bolt_sequence": ["bolt_01", "bolt_02", "bolt_03", "bolt_04", "bolt_05", "bolt_06", "bolt_07", "bolt_08"],
+      "shell_open_rule": "八个螺栓事件全部完成后才允许壳板运动；P0 使用声光与分离小件，不做爆炸破坏模拟。"
+    }
+  },
+  "export_assertions": [
+    "required_exact_bone_names 数量必须等于 18，名称、大小写和父子关系完全一致",
+    "每个 mesh_bindings 组件必须出现且只能出现一次；scene_components 中所有 mecha 组件必须被覆盖",
+    "不得新增 twist、ik、wrist 等变形骨；辅助机械运动使用 rigid_node_assembly",
+    "允许存在不渲染的 IK target，但不得参与最终蒙皮权重",
+    "每顶点权重、单 SkinnedMeshRenderer、局部顶点和逆绑定矩阵必须由 Blender/Python 实测",
+    "座舱、集装箱和控制件按节点刚体变换，不为了凑骨数并入 18 骨"
+  ]
+}

@@ -1,0 +1,307 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "steel_ridge.dropzone.p0.mission",
+  "status": "proposed_spec_only",
+  "runtime": "Unity OpenXR deterministic offline state machine",
+  "initial_state": "S00_CHECKIN",
+  "nominal_total_duration_s": 420,
+  "timeline_policy": "nominal_window_s 只用于导演与测试；除明确 auto_after_s 的状态外，玩家条件不满足不得按时间推进。",
+  "initial_variables": {
+    "shift_id": "07",
+    "driver_id": "01",
+    "shift_confirmed": false,
+    "stand_commanded": false,
+    "l1_deploy_requested": false,
+    "crouch_commanded": false,
+    "bus_sequence": "idle",
+    "heat_percent": 18.0,
+    "jammer_on": false,
+    "l0_online": false,
+    "l1_online": false,
+    "selected_target": null,
+    "target_real_reviewed": false,
+    "authorization_closed": false,
+    "authorization_consumed": false,
+    "rounds_fired": 0,
+    "authorization_reject_count": 0,
+    "overheat_count": 0,
+    "mission_penalty_s": 0,
+    "route_node": "DROP_STAND",
+    "position_online": false,
+    "mission_clock_display": "T+00:00"
+  },
+  "input_definitions": {
+    "input.dual_grip": "左右 Grip 同时握住对应虚拟操纵杆",
+    "input.dual_push": "双 Grip 保持且双杆前推超过 0.75，持续 1.2 s",
+    "input.fire": "授权闭合后右扳机短按一次；只触发两发空爆 clip",
+    "input.pause": "Menu；冻结所有任务与动画时钟",
+    "input.restart_checkpoint": "检查点菜单确认后恢复",
+    "input.stick_L": "scene_components.json#control.stick_L",
+    "input.stick_R": "scene_components.json#control.stick_R",
+    "input.mech_unlock": "scene_components.json#control.mech_unlock",
+    "input.l0_cover": "scene_components.json#control.l0_cover",
+    "input.l0_release": "scene_components.json#control.l0_release",
+    "input.target_review": "scene_components.json#control.target_review",
+    "input.target_submit": "指向目标后扳机提交复核结果",
+    "input.anvil_authorize": "scene_components.json#control.anvil_authorize",
+    "input.jammer_toggle": "scene_components.json#control.jammer_toggle",
+    "input.l1_deploy": "scene_components.json#control.l1_deploy",
+    "input.bus_handle": "scene_components.json#control.bus_handle；后拉 -45° 再前推 +45°，完成后将 bus_sequence 置为 complete",
+    "input.bus_socket": "右掌与母线接口的接触目标，不是自动合闸输入",
+    "input.target_marker": "指向并选中目标标记，再由 input.target_submit 提交复核",
+    "input.route_motion": "左摇杆速度，右摇杆默认 30° 快转"
+  },
+  "thermal_model": {
+    "unit": "percent_of_heat_sink_capacity",
+    "hard_stop_threshold": 100.0,
+    "after_clear_percent": 41.0,
+    "move_complete_add": 9.0,
+    "l1_deploy_add": 6.0,
+    "jammer_during_l1_add": 8.0,
+    "nominal_arrival_with_jammer": 64.0,
+    "bus_base_peak_add": 24.0,
+    "bus_concurrent_jammer_peak_add": 18.0,
+    "forecast_with_jammer": 106.0,
+    "forecast_without_jammer": 88.0,
+    "overheat_duration_s": 30.0,
+    "overheat_resume_percent": 55.0,
+    "successful_power_cooldown_percent": 62.0,
+    "rule": "母线合闸只有一次短时热峰；持续供电不额外耗热。关闭干扰不同时清除已积累热量，只移除本次合闸的并发干扰热峰。"
+  },
+  "authorization_model": {
+    "identity": "shift07_driver01",
+    "evidence_required": "L0_VISIBLE_REVIEW",
+    "handle_hold_s": 1.0,
+    "false_target_policy": "协议安全硬锁拒绝实弹；不击杀假目标，记录拒绝并增加 15 s 任务内耗时。",
+    "authorization_scope": "one_two_round_airburst_action",
+    "automatic_fire": false
+  },
+  "states": [
+    {
+      "state_id": "S00_CHECKIN",
+      "scene": "S00",
+      "nominal_window_s": [0, 5],
+      "checkpoint_id": "CP00_STOWED",
+      "on_enter": [{"type": "message", "text": "班次 07／驾驶员 01：双 Grip 签到"}],
+      "transitions": [{"to": "S00_DESCENT", "when": "input.dual_grip == true", "actions": [{"type": "set", "var": "shift_confirmed", "value": true}]}],
+      "hints": [{"after_s": 10, "text": "握住左右操纵杆"}, {"after_s": 20, "text": "双手 Grip；头部可自由观察"}]
+    },
+    {
+      "state_id": "S00_DESCENT",
+      "scene": "S00",
+      "nominal_window_s": [5, 20],
+      "checkpoint_id": "CP00_STOWED",
+      "on_enter": [{"type": "audio", "id": "descent_wind"}, {"type": "radio", "speaker": "驼峰级", "text": "驼峰过顶。窗口十一分钟。投完就走。"}],
+      "timed_events": [{"after_s": 5.0, "type": "radio", "speaker": "CIC", "text": "落区已授权。距最近居民区二点四公里。你落地即生效。"}, {"after_s": 10.0, "type": "touchdown", "haptic_amplitude": 0.65, "camera_shake_allowed": false}],
+      "transitions": [{"to": "S01_UNLOCK", "when": "elapsed_in_state >= 12.0"}]
+    },
+    {
+      "state_id": "S01_UNLOCK",
+      "scene": "S01",
+      "nominal_window_s": [20, 26],
+      "checkpoint_id": "CP01_LANDED",
+      "on_enter": [{"type": "message", "text": "左手后拉机械解锁柄"}, {"type": "radio", "speaker": "CIC", "text": "机械解锁。开壳。"}],
+      "transitions": [{"to": "S01_OPEN", "when": "input.mech_unlock == complete", "actions": [{"type": "play_clip", "clip_id": "cockpit.unlock"}]}],
+      "hints": [{"after_s": 10, "text": "左舷琥珀色机械柄"}, {"after_s": 20, "text": "Grip 握住并向后拉到底"}]
+    },
+    {
+      "state_id": "S01_OPEN",
+      "scene": "S01",
+      "nominal_window_s": [26, 50],
+      "checkpoint_id": "CP01_LANDED",
+      "on_enter": [{"type": "play_clip", "clip_id": "container.open"}, {"type": "play_clip", "clip_id": "mecha.hatch_open"}, {"type": "radio", "speaker": "驼峰级", "text": "下次过顶在九小时后。你们自己撑住。"}],
+      "transitions": [{"to": "S02_L0_COVER", "when": "clip.container.open == complete && clip.mecha.hatch_open == complete"}]
+    },
+    {
+      "state_id": "S02_L0_COVER",
+      "scene": "S02",
+      "nominal_window_s": [50, 58],
+      "checkpoint_id": "CP02_SHELL_OPEN",
+      "on_enter": [{"type": "radio", "speaker": "CIC", "text": "先放眼睛。"}],
+      "transitions": [{"to": "S02_L0_RELEASE", "when": "input.l0_cover == complete", "actions": [{"type": "play_clip", "clip_id": "cockpit.l0_cover"}]}],
+      "hints": [{"after_s": 10, "text": "掀开左舷 L0 保护盖"}, {"after_s": 20, "text": "Grip 或指向扳机掀开护盖"}]
+    },
+    {
+      "state_id": "S02_L0_RELEASE",
+      "scene": "S02",
+      "nominal_window_s": [58, 65],
+      "checkpoint_id": "CP02_SHELL_OPEN",
+      "transitions": [{"to": "S02_L0_BOOT", "when": "input.l0_release == complete", "actions": [{"type": "play_clip", "clip_id": "l0.deploy"}]}],
+      "hints": [{"after_s": 10, "text": "按下 L0／本地网"}, {"after_s": 20, "text": "指向橘红按钮并按扳机"}]
+    },
+    {
+      "state_id": "S02_L0_BOOT",
+      "scene": "S02",
+      "nominal_window_s": [65, 75],
+      "checkpoint_id": "CP02_SHELL_OPEN",
+      "on_enter": [{"type": "radio", "speaker": "CIC", "text": "二十一个节点，两平方公里。这是你现在能看见的全部。"}],
+      "transitions": [{"to": "S02_STAND", "when": "clip.l0.deploy == complete", "actions": [{"type": "set", "var": "l0_online", "value": true}, {"type": "set", "var": "logical_l0_nodes", "value": 21}]}]
+    },
+    {
+      "state_id": "S02_STAND",
+      "scene": "S02",
+      "nominal_window_s": [75, 115],
+      "checkpoint_id": "CP02_SHELL_OPEN",
+      "on_enter": [{"type": "message", "text": "双 Grip，双杆同步前推"}],
+      "transitions": [{"to": "S03_REVIEW", "when": "stand_commanded == true && clip.mecha.stow_to_stand == complete", "actions": [{"type": "set", "var": "heat_percent", "value": 24.0}]}],
+      "on_input": [{"input": "input.dual_push", "guard": "stand_commanded != true", "actions": [{"type": "set", "var": "stand_commanded", "value": true}, {"type": "play_clip", "clip_id": "mecha.stow_to_stand", "restart": false}]}],
+      "hints": [{"after_s": 10, "text": "双杆同时向前"}, {"after_s": 20, "text": "保持前推，直到机体站定"}],
+      "recovery": "若中途松杆，暂停在当前姿态；再次双推继续，不重播落地。"
+    },
+    {
+      "state_id": "S03_REVIEW",
+      "scene": "S03",
+      "nominal_window_s": [115, 145],
+      "checkpoint_id": "CP03_STANDING",
+      "on_enter": [{"type": "show", "instance_id": "TARGET_REAL"}, {"type": "show", "instance_id": "TARGET_DECOY"}, {"type": "message", "text": "缓存情报包：两个疑似热源；选择目标并用 L0 复核"}, {"type": "radio", "speaker": "CIC", "text": "两个热源，情报包报有，你的眼睛说没有。信谁？"}],
+      "on_input": [
+        {"input": "input.target_submit", "guard": "selected_target == 'TARGET_DECOY'", "actions": [{"type": "increment", "var": "authorization_reject_count", "value": 1}, {"type": "add_mission_clock_s", "value": 15}, {"type": "increment", "var": "mission_penalty_s", "value": 15}, {"type": "log", "id": "authorization_rejected_false_target"}, {"type": "message", "text": "授权拒绝：L0 未确认该热源；未执行实弹动作"}], "next": "S03_REVIEW"},
+        {"input": "input.target_submit", "guard": "selected_target == 'TARGET_REAL' && input.target_review == complete", "actions": [{"type": "set", "var": "target_real_reviewed", "value": true}, {"type": "set", "var": "evidence_source", "value": "L0_VISIBLE_REVIEW"}], "next": "S03_AUTHORIZE"}
+      ],
+      "transitions": [],
+      "hints": [{"after_s": 10, "text": "指向热源，切换 L0 复核后提交"}, {"after_s": 20, "text": "形状与来源标识均可区分；颜色不是唯一依据"}]
+    },
+    {
+      "state_id": "S03_AUTHORIZE",
+      "scene": "S03",
+      "nominal_window_s": [145, 170],
+      "checkpoint_id": "CP03_STANDING",
+      "on_enter": [{"type": "message", "text": "右手推铁砧授权柄到底，保持 1 秒"}, {"type": "radio", "speaker": "CIC", "text": "授权的是这一次动作，不是整场战争。"}],
+      "transitions": [{"to": "S03_FIRE", "when": "input.anvil_authorize == held_1s && target_real_reviewed == true", "actions": [{"type": "set", "var": "authorization_closed", "value": true}, {"type": "log", "id": "shift07_driver01_action01"}]}],
+      "hints": [{"after_s": 10, "text": "红色铁砧柄只授权，不开火"}, {"after_s": 20, "text": "Grip 前推到底并保持一秒"}]
+    },
+    {
+      "state_id": "S03_FIRE",
+      "scene": "S03",
+      "nominal_window_s": [170, 180],
+      "checkpoint_id": "CP03_STANDING",
+      "on_enter": [{"type": "message", "text": "授权链闭合：右扳机执行一次空爆"}],
+      "on_input": [{"input": "input.fire", "guard": "authorization_closed == true && authorization_consumed == false", "actions": [{"type": "play_clip", "clip_id": "mecha.aim_fire"}]}],
+      "transitions": [{"to": "S03_JAMMER", "when": "clip.mecha.aim_fire == complete && authorization_consumed == true", "actions": [{"type": "set", "var": "rounds_fired", "value": 2}, {"type": "set", "var": "heat_percent", "value": 36.0}]}],
+      "hints": [{"after_s": 10, "text": "右扳机短按一次"}, {"after_s": 20, "text": "未授权时扳机始终锁定"}]
+    },
+    {
+      "state_id": "S03_JAMMER",
+      "scene": "S03",
+      "nominal_window_s": [180, 190],
+      "checkpoint_id": "CP04_CLEAR",
+      "on_enter": [{"type": "message", "text": "主动打开宽带干扰，压制剩余侦察机"}],
+      "transitions": [{"to": "S04_MOVE", "when": "input.jammer_toggle == on", "actions": [{"type": "set", "var": "jammer_on", "value": true}, {"type": "set", "var": "heat_percent", "value": 41.0}, {"type": "event", "id": "enemy_scouts_disconnect_and_exit"}]}],
+      "hints": [{"after_s": 10, "text": "右舷琥珀色干扰开关"}, {"after_s": 20, "text": "打开后会持续占用热余量"}]
+    },
+    {
+      "state_id": "S04_MOVE",
+      "scene": "S04",
+      "nominal_window_s": [190, 245],
+      "checkpoint_id": "CP04_CLEAR",
+      "on_enter": [{"type": "message", "text": "左摇杆控制速度，右摇杆 30° 快转；沿硬化路绕行"}, {"type": "radio", "speaker": "CIC", "text": "软土不能走。它绕。"}],
+      "loop_actions": [{"when": "speed > 0.1", "type": "play_clip", "clip_id": "mecha.walk_cycle", "loop": true}],
+      "on_input": [{"input": "input.route_motion", "guard": "route.goal_reached == true", "actions": [{"type": "set", "var": "route_node", "value": "BUS_STOP"}, {"type": "heat_add", "value": 9.0}], "next": "S05_L1"}],
+      "transitions": [],
+      "soft_soil_rule": "进入预警区先提示并平缓止停；不死亡、不黑屏、不切换检查点。",
+      "hints": [{"after_s": 20, "text": "沿冷白硬化路线，避开褐灰软土与积水"}, {"after_s": 40, "text": "松左摇杆即停；快转可改平滑转向"}]
+    },
+    {
+      "state_id": "S05_L1",
+      "scene": "S05",
+      "nominal_window_s": [245, 270],
+      "checkpoint_id": "CP05_STATION",
+      "on_enter": [{"type": "message", "text": "左舷确认 L1／建制展开"}],
+      "transitions": [{"to": "S05_CROUCH", "when": "l1_deploy_requested == true && clip.container.l1_deploy == complete", "actions": [{"type": "set", "var": "l1_online", "value": true}, {"type": "heat_add", "value": 6.0}, {"type": "heat_add_if", "var_condition": "jammer_on == true", "value": 8.0}]}],
+      "on_input": [{"input": "input.l1_deploy", "guard": "l1_deploy_requested != true", "actions": [{"type": "set", "var": "l1_deploy_requested", "value": true}, {"type": "play_clip", "clip_id": "container.l1_deploy"}]}],
+      "hints": [{"after_s": 10, "text": "指向 L1／建制展开并确认"}, {"after_s": 20, "text": "母港在左后方来时的集装箱"}]
+    },
+    {
+      "state_id": "S05_CROUCH",
+      "scene": "S05",
+      "nominal_window_s": [270, 310],
+      "checkpoint_id": "CP05_STATION",
+      "on_enter": [{"type": "message", "text": "双杆同步前推，蹲下并让右掌接近母线接口"}, {"type": "radio", "speaker": "CIC", "text": "机体只是单元里会走路的那部分。现在，把其他部分接起来。"}],
+      "on_input": [{"input": "input.dual_push", "guard": "crouch_commanded != true", "actions": [{"type": "set", "var": "crouch_commanded", "value": true}, {"type": "play_clip", "clip_id": "mecha.crouch_bus", "restart": false}]}],
+      "transitions": [{"to": "S06_DECISION", "when": "crouch_commanded == true && clip.mecha.crouch_bus == complete && contact.palm_bus_R == true"}],
+      "hints": [{"after_s": 10, "text": "保持双杆前推"}, {"after_s": 20, "text": "右掌对准地面琥珀色接口"}]
+    },
+    {
+      "state_id": "S06_DECISION",
+      "scene": "S06",
+      "nominal_window_s": [310, 330],
+      "checkpoint_id": "CP06_CROUCH",
+      "on_enter": [{"type": "message", "text": "合闸预测按当前热沉重算：并发干扰额外 +18%；标称初次为开 106%／关 88%"}, {"type": "radio", "speaker": "CIC", "text": "合闸峰值越界。关闭干扰可保留热余量；保留干扰将进入过热保护。"}],
+      "on_input": [
+        {"input": "input.jammer_toggle", "actions": [{"type": "toggle", "var": "jammer_on"}, {"type": "log", "id": "player_thermal_choice"}]},
+        {"input": "input.bus_handle", "guard": "bus_sequence == complete && jammer_on == true", "actions": [{"type": "increment", "var": "overheat_count", "value": 1}, {"type": "increment", "var": "mission_penalty_s", "value": 30}, {"type": "log", "id": "overheat_forced_jammer_off"}], "next": "S06_OVERHEAT"},
+        {"input": "input.bus_handle", "guard": "bus_sequence == complete && jammer_on == false", "actions": [{"type": "play_clip", "clip_id": "cockpit.bus_pull_lock"}, {"type": "heat_add", "value": 24.0}], "next": "S06_BUS_POWER"}
+      ],
+      "transitions": [],
+      "hints": [{"after_s": 10, "text": "先选择干扰状态，再后拉并前推母线柄"}, {"after_s": 20, "text": "保留干扰也可继续，但会触发 30 秒过热恢复"}]
+    },
+    {
+      "state_id": "S06_OVERHEAT",
+      "scene": "S06",
+      "branch": true,
+      "nominal_window_s": [330, 360],
+      "checkpoint_id": "CP06_CROUCH",
+      "on_enter": [{"type": "set", "var": "heat_percent", "value": 100.0}, {"type": "set", "var": "jammer_on", "value": false}, {"type": "message", "text": "过热保护：干扰已下线，30 秒后恢复；母线未合闸"}],
+      "timed_events": [{"after_s": 30.0, "type": "set", "var": "heat_percent", "value": 55.0}],
+      "transitions": [{"to": "S06_DECISION", "when": "elapsed_in_state >= 30.0 && heat_percent <= 55.0"}],
+      "pause_rule": "暂停与菜单时间不计入 30 秒。"
+    },
+    {
+      "state_id": "S06_BUS_POWER",
+      "scene": "S06",
+      "nominal_window_s": [330, 375],
+      "checkpoint_id": "CP06_CROUCH",
+      "on_enter": [{"type": "play_clip", "clip_id": "station.power_on"}, {"type": "event", "id": "l1_track_only_no_new_fire_authorization"}],
+      "timed_events": [{"after_s": 12.0, "type": "set", "var": "heat_percent", "value": 62.0}, {"after_s": 12.0, "type": "set", "var": "position_online", "value": true}],
+      "transitions": [{"to": "S07_COMPLETE", "when": "clip.station.power_on == complete && position_online == true"}]
+    },
+    {
+      "state_id": "S07_COMPLETE",
+      "scene": "S07",
+      "nominal_window_s": [375, 420],
+      "checkpoint_id": "CP07_COMPLETE",
+      "on_enter": [{"type": "compute_mission_clock", "base_s": 1080, "penalty_var": "mission_penalty_s", "zero_penalty_format": "T+18:00", "penalty_format": "T+18:00 + {mission_penalty_s}s 过程惩罚"}, {"type": "radio", "speaker": "CIC", "text": "单元已就位。这次没有远程支援——这里的网是你自己的。"}, {"type": "message", "text": "阵地在线｜授权拒绝 {authorization_reject_count}｜过热 {overheat_count}｜热沉余量 {100-heat_percent}%｜任务时钟 {mission_clock_display}"}, {"type": "show_end_menu", "items": ["再次值守", "返回检查点"]}],
+      "transitions": [],
+      "completion_rule": "玩家仍可自由转头；不强制退出，不锁头，不切外部视角。"
+    }
+  ],
+  "checkpoints": [
+    {"checkpoint_id": "CP00_STOWED", "state_id": "S00_CHECKIN", "route_node": "DROP_STAND", "clip_states": {"mecha.stow_to_stand": 0.0, "container.open": 0.0, "mecha.hatch_open": 0.0}},
+    {"checkpoint_id": "CP01_LANDED", "state_id": "S01_UNLOCK", "route_node": "DROP_STAND", "clip_states": {"mecha.stow_to_stand": 0.0, "container.open": 0.0, "mecha.hatch_open": 0.0}},
+    {"checkpoint_id": "CP02_SHELL_OPEN", "state_id": "S02_L0_COVER", "route_node": "DROP_STAND", "clip_states": {"mecha.stow_to_stand": 0.0, "container.open": 4.8, "mecha.hatch_open": 2.4}},
+    {"checkpoint_id": "CP03_STANDING", "state_id": "S03_REVIEW", "route_node": "DROP_STAND", "clip_states": {"mecha.stow_to_stand": 6.0, "container.open": 4.8, "mecha.hatch_open": 2.4, "cockpit.l0_cover": 0.6, "l0.deploy": 5.0}},
+    {"checkpoint_id": "CP04_CLEAR", "state_id": "S04_MOVE", "route_node": "DROP_STAND", "clip_states": {"mecha.stow_to_stand": 6.0, "container.open": 4.8, "mecha.hatch_open": 2.4, "cockpit.l0_cover": 0.6, "l0.deploy": 5.0, "mecha.aim_fire": 3.2}},
+    {"checkpoint_id": "CP05_STATION", "state_id": "S05_L1", "route_node": "BUS_STOP", "clip_states": {"mecha.stow_to_stand": 6.0, "container.open": 4.8, "mecha.hatch_open": 2.4, "cockpit.l0_cover": 0.6, "l0.deploy": 5.0}},
+    {"checkpoint_id": "CP06_CROUCH", "state_id": "S06_DECISION", "route_node": "BUS_STOP", "clip_states": {"mecha.stow_to_stand": 6.0, "container.open": 4.8, "mecha.hatch_open": 2.4, "cockpit.l0_cover": 0.6, "l0.deploy": 5.0, "container.l1_deploy": 6.0, "mecha.crouch_bus": 5.0}},
+    {"checkpoint_id": "CP07_COMPLETE", "state_id": "S07_COMPLETE", "route_node": "BUS_STOP", "clip_states": {"mecha.stow_to_stand": 6.0, "container.open": 4.8, "mecha.hatch_open": 2.4, "cockpit.l0_cover": 0.6, "l0.deploy": 5.0, "container.l1_deploy": 6.0, "mecha.crouch_bus": 5.0, "cockpit.bus_pull_lock": 2.2, "station.power_on": 12.0}}
+  ],
+  "checkpoint_restore_rules": [
+    "未在 clip_states 列出的 clip 一律恢复为 0 秒和未触发事件状态",
+    "保存全部 initial_variables 的当前值、任务状态 ID、路线节点、热沉、授权日志和过热计数",
+    "按 clip_states 直接采样并设置节点 TRS；不得高速重播开壳、空爆或落地",
+    "恢复后清理未完成的输入、触觉、一次性事件与音频句柄",
+    "CP04_CLEAR 默认 jammer_on=true；CP06_CROUCH 保存玩家进入该检查点时的热沉与干扰状态",
+    "任何检查点不得伪造授权：target_real_reviewed、authorization_closed 与 rounds_fired 按快照恢复"
+  ],
+  "global_recovery": {
+    "pause": "冻结任务、动画、蜂群、过热、提示和任务时钟；恢复后不重复一次性事件",
+    "controller_loss": "保持当前状态并显示头显内提示；不自动替玩家授权或合闸",
+    "tracking_loss": "保留固定座舱最后已知参照，显示提示；不进行虚拟甩动补偿",
+    "soft_soil": "当前状态内减速止停并提示，不销毁机体",
+    "application_restart": "允许从最近检查点恢复；无网络请求",
+    "fatal_state": "P0 无随机死亡与战斗失败；只有可恢复过热与操作等待"
+  },
+  "acceptance_tests": [
+    {"test_id": "M01", "given": "未选择真实目标或未完成 L0 复核", "when": "按授权柄和右扳机", "then": "无炮口事件、无伤害、无授权闭合"},
+    {"test_id": "M02", "given": "选择 TARGET_DECOY 并提交", "when": "任意次数", "then": "每次只记录拒绝和任务耗时，不出现假目标爆炸"},
+    {"test_id": "M03", "given": "授权已闭合", "when": "右扳机一次", "then": "只触发两发空爆并消费授权，第二次扳机不重播"},
+    {"test_id": "M04", "given": "S06 干扰开且热沉 64%", "when": "完成母线柄", "then": "进入 30 秒过热恢复，干扰强制关，阵地不上线"},
+    {"test_id": "M05", "given": "S06 干扰关且热沉 64%", "when": "完成母线柄", "then": "峰值 88%，阵地可上线"},
+    {"test_id": "M06", "given": "任意动画或过热状态", "when": "暂停 10 秒再恢复", "then": "状态与计时无跳变，一次性事件不重复"},
+    {"test_id": "M07", "given": "每个检查点", "when": "重启应用并恢复", "then": "资产姿态、任务变量、输入锁和日志一致，无快速重播"},
+    {"test_id": "M08", "given": "断网且后台无在线模型", "when": "完整通关", "then": "所有状态与结局可达"},
+    {"test_id": "M09", "given": "任意 XR 正片状态", "when": "玩家转头", "then": "无脚本覆盖头部姿态、无第三人称切换、无全幅滚转"},
+    {"test_id": "M10", "given": "撑起、L1 或蹲下命令已锁存但输入事件已结束", "when": "对应 clip 与接触条件完成", "then": "仍能进入下一状态，且命令不会重复触发 clip"},
+    {"test_id": "M11", "given": "CP07_COMPLETE", "when": "恢复检查点", "then": "母线柄采样在 2.2 秒锁定位，六盏节点灯与阵地状态一致"}
+  ]
+}

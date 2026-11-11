@@ -1,0 +1,11 @@
+{
+  "contract_id": "steel_ridge.dropzone.p0",
+  "validation_level": "static_json_and_cross_file_references",
+  "checks_run": 1782,
+  "errors": [],
+  "warnings": [
+    "Static checks do not validate Blender geometry, actual vertex weights, rendering, PICO performance, or comfort."
+  ],
+  "passed": true,
+  "geometry_and_runtime_validation": "not_run"
+}

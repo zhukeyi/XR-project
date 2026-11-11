@@ -1,0 +1,227 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "steel_ridge.dropzone.p0",
+  "status": "proposed_spec_only",
+  "export_freeze": {
+    "adr": "ADR-006",
+    "may_export_now": false,
+    "note": "所有 output 均为解冻后的规划路径；本文件不授权生成 glTF、FBX 或 VAT。"
+  },
+  "units": "meter",
+  "coordinate_space": {
+    "contract": "right_handed_y_up",
+    "up": "+Y",
+    "front": "+Z",
+    "left": "+X",
+    "ground_y": 0.0,
+    "blender_from_contract": "[x_b, y_b, z_b] = [-x, z, y]",
+    "contract_from_blender": "[x, y, z] = [-x_b, z_b, y_b]",
+    "rotation_storage": "contract_local_euler_xyz_degree",
+    "import_scale": 1.0,
+    "runtime_rescale_allowed": false
+  },
+  "lod_rules": {
+    "LOD0": "近景与座舱；完整倒角和交互件",
+    "LOD1": "LOD0 三角面约 30%；10–25 m",
+    "LOD2": "LOD0 三角面约 10%；25 m 以外",
+    "cockpit": "仅 LOD0，不降级",
+    "runtime_note": "距离阈值需真机复核，不得据此处直接宣称 90 Hz。"
+  },
+  "materials": {
+    "frame_dark": {"base_color_linear": [0.055, 0.065, 0.070, 1.0], "metallic": 0.75, "roughness": 0.42},
+    "structure_steel": {"base_color_linear": [0.22, 0.25, 0.26, 1.0], "metallic": 0.82, "roughness": 0.38},
+    "armor_ash": {"base_color_linear": [0.34, 0.37, 0.38, 1.0], "metallic": 0.55, "roughness": 0.48},
+    "warning_amber": {"base_color_linear": [0.95, 0.43, 0.055, 1.0], "metallic": 0.20, "roughness": 0.42},
+    "l0_orange": {"base_color_linear": [0.80, 0.16, 0.025, 1.0], "metallic": 0.10, "roughness": 0.35, "emissive_linear": [1.0, 0.20, 0.025], "emissive_strength": 3.0},
+    "core_red": {"base_color_linear": [0.35, 0.015, 0.010, 1.0], "metallic": 0.10, "roughness": 0.38, "emissive_linear": [1.0, 0.025, 0.010], "emissive_strength": 2.5},
+    "network_white": {"base_color_linear": [0.65, 0.82, 0.90, 1.0], "metallic": 0.05, "roughness": 0.30, "emissive_linear": [0.65, 0.85, 1.0], "emissive_strength": 2.0},
+    "rubber": {"base_color_linear": [0.018, 0.020, 0.022, 1.0], "metallic": 0.0, "roughness": 0.82},
+    "cockpit_paint": {"base_color_linear": [0.11, 0.14, 0.15, 1.0], "metallic": 0.35, "roughness": 0.55},
+    "display_glass": {"base_color_linear": [0.015, 0.035, 0.045, 0.85], "metallic": 0.05, "roughness": 0.18},
+    "concrete": {"base_color_linear": [0.19, 0.20, 0.20, 1.0], "metallic": 0.0, "roughness": 0.91},
+    "soil": {"base_color_linear": [0.085, 0.075, 0.060, 1.0], "metallic": 0.0, "roughness": 0.96},
+    "water": {"base_color_linear": [0.055, 0.075, 0.080, 0.72], "metallic": 0.0, "roughness": 0.16},
+    "holo_cyan": {"base_color_linear": [0.08, 0.50, 0.62, 0.60], "metallic": 0.0, "roughness": 0.30, "emissive_linear": [0.08, 0.55, 0.70], "emissive_strength": 1.5}
+  },
+  "assets": [
+    {
+      "asset_id": "mecha_793",
+      "kind": "skinned_mecha",
+      "output_glb": "mecha_render/out/dropzone_p0/mecha/mecha_793.glb",
+      "output_report": "mecha_render/out/dropzone_p0/mecha/mecha_793.json",
+      "rig": "rig_contract.json#rigs.mecha_793",
+      "triangle_budget_lod0": [80000, 150000],
+      "material_budget": 8,
+      "materials_used": ["frame_dark", "structure_steel", "armor_ash", "warning_amber", "l0_orange", "core_red", "network_white", "rubber"],
+      "world_bbox_target_m": {"min": [-2.24, 0.0, -1.65], "max": [2.24, 7.93, 1.15]},
+      "world_bbox_tolerance_m": {"height": 0.02, "ground": 0.005, "width_depth": 0.05},
+      "transport_bbox_limit_m": {"width_x": 2.20, "height_in_container": 2.90, "length_in_container": 5.60, "note": "必须实测 stowed_transport 姿态；肩甲不可穿出内腔，失败则走 ADR 变更，禁止整体缩小机体。"},
+      "components": [
+        {"component_id": "mecha.head.shell", "bind_bone": "head", "space": "rest_world_mecha", "bbox_m": {"min": [-0.48, 7.04, -0.42], "max": [0.48, 7.72, 0.48]}, "dimensions_m": [0.96, 0.68, 0.90], "materials": ["armor_ash", "frame_dark"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.head.sensor", "bind_bone": "head", "space": "rest_world_mecha", "bbox_m": {"min": [-0.30, 7.30, 0.46], "max": [0.30, 7.58, 0.62]}, "dimensions_m": [0.60, 0.28, 0.16], "materials": ["frame_dark", "l0_orange"], "lod": ["LOD0", "LOD1"], "collision": {"type": "none"}},
+        {"component_id": "mecha.head.antenna_L", "bind_bone": "head", "space": "rest_world_mecha", "bbox_m": {"min": [0.20, 7.68, -0.10], "max": [0.44, 7.93, 0.08]}, "dimensions_m": [0.24, 0.25, 0.18], "materials": ["structure_steel"], "lod": ["LOD0", "LOD1"], "collision": {"type": "none"}},
+        {"component_id": "mecha.head.antenna_R", "bind_bone": "head", "space": "rest_world_mecha", "bbox_m": {"min": [-0.44, 7.68, -0.10], "max": [-0.20, 7.93, 0.08]}, "dimensions_m": [0.24, 0.25, 0.18], "materials": ["structure_steel"], "lod": ["LOD0", "LOD1"], "collision": {"type": "none"}},
+        {"component_id": "mecha.torso.chest_frame", "bind_bone": "chest", "space": "rest_world_mecha", "bbox_m": {"min": [-1.05, 5.10, -0.85], "max": [1.05, 7.04, 1.15]}, "dimensions_m": [2.10, 1.94, 2.00], "materials": ["frame_dark", "structure_steel", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "compound_box_exterior", "layer": "mecha_body"}, "construction": "空腹桁架与外壳，不得用实心盒占满座舱内腔。"},
+        {"component_id": "mecha.torso.waist", "bind_bone": "hips", "space": "rest_world_mecha", "bbox_m": {"min": [-0.60, 4.56, -0.55], "max": [0.60, 5.16, 0.55]}, "dimensions_m": [1.20, 0.60, 1.10], "materials": ["frame_dark", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.torso.hips", "bind_bone": "hips", "space": "rest_world_mecha", "bbox_m": {"min": [-0.85, 4.14, -0.60], "max": [0.85, 4.60, 0.60]}, "dimensions_m": [1.70, 0.46, 1.20], "materials": ["frame_dark", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.backpack.main", "bind_bone": "backpack", "space": "rest_world_mecha", "bbox_m": {"min": [-1.05, 4.96, -1.65], "max": [1.05, 7.18, -0.85]}, "dimensions_m": [2.10, 2.22, 0.80], "materials": ["frame_dark", "structure_steel", "core_red"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.shoulder.armor_L", "bind_bone": "shoulder_L", "space": "rest_world_mecha", "bbox_m": {"min": [1.00, 6.15, -0.62], "max": [2.24, 7.50, 0.62]}, "dimensions_m": [1.24, 1.35, 1.24], "materials": ["armor_ash", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.shoulder.armor_R", "bind_bone": "shoulder_R", "space": "rest_world_mecha", "bbox_m": {"min": [-2.24, 6.15, -0.62], "max": [-1.00, 7.50, 0.62]}, "dimensions_m": [1.24, 1.35, 1.24], "materials": ["armor_ash", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.arm.upper_L", "bind_bone": "shoulder_L", "space": "rest_world_mecha", "bbox_m": {"min": [1.35, 5.20, -0.36], "max": [1.98, 6.55, 0.36]}, "dimensions_m": [0.63, 1.35, 0.72], "materials": ["frame_dark", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "capsule", "layer": "mecha_body"}},
+        {"component_id": "mecha.arm.upper_R", "bind_bone": "shoulder_R", "space": "rest_world_mecha", "bbox_m": {"min": [-1.98, 5.20, -0.36], "max": [-1.35, 6.55, 0.36]}, "dimensions_m": [0.63, 1.35, 0.72], "materials": ["frame_dark", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "capsule", "layer": "mecha_body"}},
+        {"component_id": "mecha.arm.forearm_hand_L", "bind_bone": "elbow_L", "space": "rest_world_mecha", "bbox_m": {"min": [1.28, 3.48, -0.42], "max": [2.05, 5.34, 0.48]}, "dimensions_m": [0.77, 1.86, 0.90], "materials": ["frame_dark", "armor_ash", "rubber"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "compound_box", "layer": "mecha_body"}},
+        {"component_id": "mecha.arm.forearm_hand_R", "bind_bone": "elbow_R", "space": "rest_world_mecha", "bbox_m": {"min": [-2.05, 3.48, -0.42], "max": [-1.28, 5.34, 0.48]}, "dimensions_m": [0.77, 1.86, 0.90], "materials": ["frame_dark", "armor_ash", "rubber"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "compound_box", "layer": "mecha_body"}},
+        {"component_id": "mecha.weapon.cannon_R", "bind_bone": "elbow_R", "space": "rest_world_mecha", "bbox_m": {"min": [-2.15, 3.82, 0.35], "max": [-1.35, 4.36, 1.15]}, "dimensions_m": [0.80, 0.54, 0.80], "materials": ["frame_dark", "structure_steel", "warning_amber"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "mecha_weapon"}},
+        {"component_id": "mecha.leg.thigh_L", "bind_bone": "hip_L", "space": "rest_world_mecha", "bbox_m": {"min": [0.34, 2.18, -0.46], "max": [0.96, 4.18, 0.46]}, "dimensions_m": [0.62, 2.00, 0.92], "materials": ["frame_dark", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "capsule", "layer": "mecha_body"}},
+        {"component_id": "mecha.leg.thigh_R", "bind_bone": "hip_R", "space": "rest_world_mecha", "bbox_m": {"min": [-0.96, 2.18, -0.46], "max": [-0.34, 4.18, 0.46]}, "dimensions_m": [0.62, 2.00, 0.92], "materials": ["frame_dark", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "capsule", "layer": "mecha_body"}},
+        {"component_id": "mecha.leg.shin_L", "bind_bone": "knee_L", "space": "rest_world_mecha", "bbox_m": {"min": [0.34, 0.56, -0.43], "max": [0.96, 2.32, 0.43]}, "dimensions_m": [0.62, 1.76, 0.86], "materials": ["frame_dark", "structure_steel", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "capsule", "layer": "mecha_body"}},
+        {"component_id": "mecha.leg.shin_R", "bind_bone": "knee_R", "space": "rest_world_mecha", "bbox_m": {"min": [-0.96, 0.56, -0.43], "max": [-0.34, 2.32, 0.43]}, "dimensions_m": [0.62, 1.76, 0.86], "materials": ["frame_dark", "structure_steel", "armor_ash"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "capsule", "layer": "mecha_body"}},
+        {"component_id": "mecha.leg.foot_L", "bind_bone": "ankle_L", "space": "rest_world_mecha", "bbox_m": {"min": [0.26, 0.0, -0.55], "max": [1.02, 0.64, 0.95]}, "dimensions_m": [0.76, 0.64, 1.50], "materials": ["frame_dark", "rubber"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_foot"}},
+        {"component_id": "mecha.leg.foot_R", "bind_bone": "ankle_R", "space": "rest_world_mecha", "bbox_m": {"min": [-1.02, 0.0, -0.55], "max": [-0.26, 0.64, 0.95]}, "dimensions_m": [0.76, 0.64, 1.50], "materials": ["frame_dark", "rubber"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "mecha_foot"}},
+        {"component_id": "mecha.hatch.leaf_L", "bind_bone": "hatch_hinge_L", "space": "rest_world_mecha", "bbox_m": {"min": [0.0, 5.40, 1.14], "max": [0.74, 6.78, 1.23]}, "dimensions_m": [0.74, 1.38, 0.09], "materials": ["armor_ash", "frame_dark"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "mecha_hatch"}},
+        {"component_id": "mecha.hatch.leaf_R", "bind_bone": "hatch_hinge_R", "space": "rest_world_mecha", "bbox_m": {"min": [-0.74, 5.40, 1.14], "max": [0.0, 6.78, 1.23]}, "dimensions_m": [0.74, 1.38, 0.09], "materials": ["armor_ash", "frame_dark"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "mecha_hatch"}},
+        {"component_id": "mecha.rack.L0_L", "bind_bone": "rack_L", "space": "rest_world_mecha", "bbox_m": {"min": [0.92, 5.34, -1.55], "max": [1.42, 6.16, -1.05]}, "dimensions_m": [0.50, 0.82, 0.50], "materials": ["frame_dark", "warning_amber"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "mecha_body"}},
+        {"component_id": "mecha.rack.L0_R", "bind_bone": "rack_R", "space": "rest_world_mecha", "bbox_m": {"min": [-1.42, 5.34, -1.55], "max": [-0.92, 6.16, -1.05]}, "dimensions_m": [0.50, 0.82, 0.50], "materials": ["frame_dark", "warning_amber"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "mecha_body"}}
+      ]
+    },
+    {
+      "asset_id": "cockpit_human_scale",
+      "kind": "rigid_node_assembly",
+      "output_glb": "mecha_render/out/dropzone_p0/cockpit/cockpit_human_scale.glb",
+      "output_report": "mecha_render/out/dropzone_p0/cockpit/cockpit_human_scale.json",
+      "rig": "rig_contract.json#rigs.cockpit_controls",
+      "triangle_budget_lod0": [50000, 80000],
+      "material_budget": 6,
+      "materials_used": ["frame_dark", "cockpit_paint", "warning_amber", "core_red", "network_white", "display_glass"],
+      "asset_local_bbox_m": {"min": [-0.85, 0.0, -0.90], "max": [0.85, 1.82, 0.90]},
+      "interior_clear_m": {"width": 1.45, "height": 1.70, "depth": 1.60},
+      "mount": {"parent_bone": "chest", "leveling_node": "cockpit_level", "floor_world_rest_m": [0.0, 5.18, 0.10], "scale": [1.0, 1.0, 1.0]},
+      "components": [
+        {"component_id": "cockpit.frame", "node_id": "cockpit_root", "space": "asset_local", "bbox_m": {"min": [-0.85, 0.0, -0.90], "max": [0.85, 1.82, 0.90]}, "dimensions_m": [1.70, 1.82, 1.80], "materials": ["frame_dark", "cockpit_paint"], "lod": ["LOD0"], "collision": {"type": "compound_box_exterior", "layer": "cockpit"}},
+        {"component_id": "cockpit.seat", "node_id": "seat", "space": "asset_local", "bbox_m": {"min": [-0.28, 0.0, -0.46], "max": [0.28, 1.20, 0.16]}, "dimensions_m": [0.56, 1.20, 0.62], "materials": ["frame_dark", "cockpit_paint"], "lod": ["LOD0"], "collision": {"type": "box", "layer": "cockpit"}, "seat_surface_height_m": 0.43},
+        {"component_id": "cockpit.panel.front", "node_id": "front_panel", "space": "asset_local", "bbox_m": {"min": [-0.66, 0.50, 0.58], "max": [0.66, 1.24, 0.78]}, "dimensions_m": [1.32, 0.74, 0.20], "materials": ["cockpit_paint", "display_glass", "network_white"], "lod": ["LOD0"], "collision": {"type": "box", "layer": "cockpit"}},
+        {"component_id": "control.stick_L", "node_id": "stick_L_pivot", "interaction_id": "input.stick_L", "space": "asset_local", "bbox_m": {"min": [-0.47, 0.48, 0.22], "max": [-0.25, 0.91, 0.47]}, "dimensions_m": [0.22, 0.43, 0.25], "materials": ["frame_dark", "warning_amber"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.stick_R", "node_id": "stick_R_pivot", "interaction_id": "input.stick_R", "space": "asset_local", "bbox_m": {"min": [0.25, 0.48, 0.22], "max": [0.47, 0.91, 0.47]}, "dimensions_m": [0.22, 0.43, 0.25], "materials": ["frame_dark", "warning_amber"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.mech_unlock", "node_id": "mech_unlock_pivot", "interaction_id": "input.mech_unlock", "space": "asset_local", "bbox_m": {"min": [-0.71, 0.53, 0.18], "max": [-0.51, 0.91, 0.42]}, "dimensions_m": [0.20, 0.38, 0.24], "materials": ["frame_dark", "warning_amber"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.l0_cover", "node_id": "l0_cover_hinge", "interaction_id": "input.l0_cover", "space": "asset_local", "bbox_m": {"min": [-0.65, 0.92, 0.55], "max": [-0.43, 1.06, 0.64]}, "dimensions_m": [0.22, 0.14, 0.09], "materials": ["warning_amber"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.l0_button", "node_id": "l0_button_slide", "interaction_id": "input.l0_release", "space": "asset_local", "bbox_m": {"min": [-0.61, 0.93, 0.54], "max": [-0.47, 1.01, 0.60]}, "dimensions_m": [0.14, 0.08, 0.06], "materials": ["warning_amber", "frame_dark"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.target_review", "node_id": "target_review_switch", "interaction_id": "input.target_review", "space": "asset_local", "bbox_m": {"min": [-0.12, 0.83, 0.54], "max": [0.12, 0.97, 0.64]}, "dimensions_m": [0.24, 0.14, 0.10], "materials": ["network_white", "frame_dark"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.anvil_authorize", "node_id": "anvil_handle_pivot", "interaction_id": "input.anvil_authorize", "space": "asset_local", "bbox_m": {"min": [0.43, 0.50, 0.22], "max": [0.67, 0.94, 0.46]}, "dimensions_m": [0.24, 0.44, 0.24], "materials": ["core_red", "frame_dark"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.jammer", "node_id": "jammer_switch_pivot", "interaction_id": "input.jammer_toggle", "space": "asset_local", "bbox_m": {"min": [0.46, 1.02, 0.54], "max": [0.64, 1.20, 0.65]}, "dimensions_m": [0.18, 0.18, 0.11], "materials": ["warning_amber", "frame_dark"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.l1_deploy", "node_id": "l1_button_slide", "interaction_id": "input.l1_deploy", "space": "asset_local", "bbox_m": {"min": [-0.64, 0.70, 0.54], "max": [-0.43, 0.84, 0.64]}, "dimensions_m": [0.21, 0.14, 0.10], "materials": ["network_white", "frame_dark"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}},
+        {"component_id": "control.bus_handle", "node_id": "bus_handle_pivot", "interaction_id": "input.bus_handle", "space": "asset_local", "bbox_m": {"min": [0.43, 0.42, 0.05], "max": [0.69, 0.90, 0.31]}, "dimensions_m": [0.26, 0.48, 0.26], "materials": ["warning_amber", "frame_dark"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "cockpit_interaction"}}
+      ]
+    },
+    {
+      "asset_id": "drop_container",
+      "kind": "rigid_node_assembly",
+      "output_glb": "mecha_render/out/dropzone_p0/container/drop_container.glb",
+      "output_report": "mecha_render/out/dropzone_p0/container/drop_container.json",
+      "rig": "rig_contract.json#rigs.drop_container",
+      "triangle_budget_lod0": [18000, 35000],
+      "material_budget": 6,
+      "materials_used": ["frame_dark", "structure_steel", "armor_ash", "warning_amber", "core_red", "network_white"],
+      "asset_local_bbox_m": {"min": [-1.25, 0.0, -3.0], "max": [1.25, 3.40, 3.0]},
+      "transport_inner_clear_m": {"width_x": 2.30, "height_y": 3.10, "length_z": 5.80},
+      "ground_footprint_m": [2.50, 6.00],
+      "components": [
+        {"component_id": "container.crush_base", "node_id": "container_root", "space": "asset_local", "bbox_m": {"min": [-1.25, 0.0, -3.0], "max": [1.25, 0.30, 3.0]}, "dimensions_m": [2.50, 0.30, 6.00], "materials": ["frame_dark", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "environment"}},
+        {"component_id": "container.shell_L", "node_id": "shell_hinge_L", "space": "asset_local", "bbox_m": {"min": [1.13, 0.30, -2.90], "max": [1.25, 3.30, 2.90]}, "dimensions_m": [0.12, 3.00, 5.80], "materials": ["armor_ash", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "environment"}},
+        {"component_id": "container.shell_R", "node_id": "shell_hinge_R", "space": "asset_local", "bbox_m": {"min": [-1.25, 0.30, -2.90], "max": [-1.13, 3.30, 2.90]}, "dimensions_m": [0.12, 3.00, 5.80], "materials": ["armor_ash", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "environment"}},
+        {"component_id": "container.roof", "node_id": "roof_hinge", "space": "asset_local", "bbox_m": {"min": [-1.13, 3.18, -2.90], "max": [1.13, 3.30, 2.90]}, "dimensions_m": [2.26, 0.12, 5.80], "materials": ["armor_ash", "warning_amber"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "environment"}},
+        {"component_id": "container.front_ramp", "node_id": "front_ramp_hinge", "space": "asset_local", "bbox_m": {"min": [-1.13, 0.30, 2.78], "max": [1.13, 3.18, 2.90]}, "dimensions_m": [2.26, 2.88, 0.12], "materials": ["armor_ash", "warning_amber"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "environment"}},
+        {"component_id": "container.L1_bay", "node_id": "l1_bay_hinge", "space": "asset_local", "bbox_m": {"min": [-1.05, 0.32, -2.75], "max": [1.05, 1.10, -0.80]}, "dimensions_m": [2.10, 0.78, 1.95], "materials": ["frame_dark", "network_white"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "environment"}},
+        {"component_id": "container.L1_door", "node_id": "l1_door_hinge", "space": "asset_local", "bbox_m": {"min": [-1.08, 1.08, -2.78], "max": [1.08, 1.18, -0.78]}, "dimensions_m": [2.16, 0.10, 2.00], "materials": ["armor_ash", "warning_amber"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "environment"}}
+      ]
+    },
+    {
+      "asset_id": "drone_l0",
+      "kind": "rigid_mesh",
+      "output_glb": "mecha_render/out/dropzone_p0/drones/drone_l0.glb",
+      "triangle_budget_lod0": [12000, 22000],
+      "material_budget": 3,
+      "materials_used": ["frame_dark", "structure_steel", "l0_orange"],
+      "components": [
+        {"component_id": "drone.l0.body", "node_id": "drone_l0_root", "interaction_id": "input.target_marker", "space": "asset_local", "bbox_m": {"min": [-0.24, -0.10, -0.30], "max": [0.24, 0.12, 0.30]}, "dimensions_m": [0.48, 0.22, 0.60], "materials": ["frame_dark", "structure_steel", "l0_orange"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "interaction_trigger_only", "layer": "target_interaction", "note": "只在 S03 对目标实例启用射线选择；P0 不做无人机物理碰撞"}}
+      ]
+    },
+    {
+      "asset_id": "industrial_kit",
+      "kind": "static_modular_environment",
+      "output_glb": "mecha_render/out/dropzone_p0/environment/industrial_kit.glb",
+      "triangle_budget_lod0": [60000, 100000],
+      "material_budget": 8,
+      "materials_used": ["concrete", "soil", "water", "frame_dark", "structure_steel", "warning_amber", "network_white", "holo_cyan"],
+      "components": [
+        {"component_id": "env.landing_pad", "node_id": "landing_pad", "space": "asset_local", "bbox_m": {"min": [-6.0, -0.30, -7.0], "max": [6.0, 0.0, 7.0]}, "dimensions_m": [12.0, 0.30, 14.0], "materials": ["concrete"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "ground_hard"}},
+        {"component_id": "env.soft_soil", "node_id": "soft_soil", "space": "asset_local", "bbox_m": {"min": [-5.0, -0.12, -7.0], "max": [5.0, 0.0, 7.0]}, "dimensions_m": [10.0, 0.12, 14.0], "materials": ["soil", "water"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box_trigger", "layer": "ground_soft"}},
+        {"component_id": "env.hard_route_strip", "node_id": "hard_route_strip", "space": "asset_local", "bbox_m": {"min": [-1.8, -0.20, -8.5], "max": [1.8, 0.0, 8.5]}, "dimensions_m": [3.60, 0.20, 17.0], "materials": ["concrete", "network_white"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "ground_hard"}},
+        {"component_id": "env.station_platform", "node_id": "station_platform", "space": "asset_local", "bbox_m": {"min": [-6.0, -0.30, -6.0], "max": [6.0, 0.0, 6.0]}, "dimensions_m": [12.0, 0.30, 12.0], "materials": ["concrete", "structure_steel"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "box", "layer": "ground_hard"}},
+        {"component_id": "env.bus_socket", "node_id": "bus_socket", "interaction_id": "input.bus_socket", "space": "asset_local", "bbox_m": {"min": [-0.65, 0.0, -0.65], "max": [0.65, 0.60, 0.65]}, "dimensions_m": [1.30, 0.60, 1.30], "materials": ["frame_dark", "warning_amber", "network_white"], "lod": ["LOD0", "LOD1"], "collision": {"type": "box", "layer": "station_interaction"}},
+        {"component_id": "env.substation_gantry", "node_id": "substation_gantry", "space": "asset_local", "bbox_m": {"min": [-3.0, 0.0, -1.0], "max": [3.0, 5.0, 1.0]}, "dimensions_m": [6.0, 5.0, 2.0], "materials": ["structure_steel", "frame_dark", "network_white"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "compound_box", "layer": "environment"}},
+        {"component_id": "env.route_lamp", "node_id": "route_lamp", "space": "asset_local", "bbox_m": {"min": [-0.14, 0.0, -0.14], "max": [0.14, 1.20, 0.14]}, "dimensions_m": [0.28, 1.20, 0.28], "materials": ["frame_dark", "network_white"], "lod": ["LOD0", "LOD1", "LOD2"], "collision": {"type": "none"}},
+        {"component_id": "env.target_marker", "node_id": "target_marker", "interaction_id": "input.target_marker", "space": "asset_local", "bbox_m": {"min": [-0.50, -0.50, -0.50], "max": [0.50, 0.50, 0.50]}, "dimensions_m": [1.0, 1.0, 1.0], "materials": ["holo_cyan", "warning_amber"], "lod": ["LOD0"], "collision": {"type": "interaction_trigger", "layer": "holo_interaction"}}
+      ]
+    }
+  ],
+  "scene_instances": [
+    {"instance_id": "DROP_CONTAINER", "asset_id": "drop_container", "position_m": [-7.0, 0.0, -4.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "MECHA", "asset_id": "mecha_793", "position_m": [-7.0, 1.55, -10.2], "rotation_euler_xyz_deg": [90.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0], "initial_clip": "mecha.stow_to_stand", "initial_time_s": 0.0},
+    {"instance_id": "COCKPIT", "asset_id": "cockpit_human_scale", "parent_instance": "MECHA", "mount": "cockpit_level", "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "LANDING_PAD", "asset_id": "industrial_kit", "component_id": "env.landing_pad", "position_m": [-7.0, 0.0, -4.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "SOFT_SOIL", "asset_id": "industrial_kit", "component_id": "env.soft_soil", "position_m": [-0.5, 0.0, 8.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "HARD_ROUTE_STRIP", "asset_id": "industrial_kit", "component_id": "env.hard_route_strip", "position_m": [-8.0, 0.0, 11.5], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "STATION_PLATFORM", "asset_id": "industrial_kit", "component_id": "env.station_platform", "position_m": [0.0, 0.0, 22.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "BUS_SOCKET", "asset_id": "industrial_kit", "component_id": "env.bus_socket", "position_m": [0.0, 0.0, 20.5], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "STATION_GANTRY", "asset_id": "industrial_kit", "component_id": "env.substation_gantry", "position_m": [0.0, 0.0, 26.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "NODE_LAMP_01", "asset_id": "industrial_kit", "component_id": "env.route_lamp", "position_m": [0.0, 0.0, 19.2], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "NODE_LAMP_02", "asset_id": "industrial_kit", "component_id": "env.route_lamp", "position_m": [0.0, 0.0, 21.8], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "NODE_LAMP_03", "asset_id": "industrial_kit", "component_id": "env.route_lamp", "position_m": [-1.5, 0.0, 22.8], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "NODE_LAMP_04", "asset_id": "industrial_kit", "component_id": "env.route_lamp", "position_m": [1.5, 0.0, 22.8], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "NODE_LAMP_05", "asset_id": "industrial_kit", "component_id": "env.route_lamp", "position_m": [-2.5, 0.0, 24.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "NODE_LAMP_06", "asset_id": "industrial_kit", "component_id": "env.route_lamp", "position_m": [2.5, 0.0, 24.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0]},
+    {"instance_id": "TARGET_REAL", "asset_id": "drone_l0", "position_m": [-1.0, 4.2, 13.0], "rotation_euler_xyz_deg": [0.0, 180.0, 0.0], "scale": [1.0, 1.0, 1.0], "placeholder_for": "enemy_scout", "note": "P0 灰盒以同尺度 L0 网格占位；正式敌机必须另建资产，不用缩放伪装新型号。", "initially_visible": false},
+    {"instance_id": "TARGET_DECOY", "asset_id": "industrial_kit", "component_id": "env.target_marker", "position_m": [5.0, 3.5, 15.0], "rotation_euler_xyz_deg": [0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0], "initially_visible": false}
+  ],
+  "route": {
+    "mode": "guided_graph_with_player_speed_and_snap_turn",
+    "speed_m_per_s": {"min": 0.0, "max": 2.2, "acceleration": 0.8, "deceleration": 1.2},
+    "snap_turn_degrees": 30,
+    "nodes": [
+      {"id": "DROP_STAND", "position_m": [-7.0, 0.0, -2.0]},
+      {"id": "DROP_EXIT", "position_m": [-8.0, 0.0, 2.0]},
+      {"id": "HARD_A", "position_m": [-8.0, 0.0, 8.0]},
+      {"id": "HARD_B", "position_m": [-8.0, 0.0, 20.0]},
+      {"id": "STATION_APPROACH", "position_m": [-4.0, 0.0, 20.0]},
+      {"id": "BUS_STOP", "position_m": [0.0, 0.0, 20.5]}
+    ],
+    "edges": [
+      {"from": "DROP_STAND", "to": "DROP_EXIT", "clear_width_m": 3.6},
+      {"from": "DROP_EXIT", "to": "HARD_A", "clear_width_m": 3.6},
+      {"from": "HARD_A", "to": "HARD_B", "clear_width_m": 3.6},
+      {"from": "HARD_B", "to": "STATION_APPROACH", "clear_width_m": 3.6},
+      {"from": "STATION_APPROACH", "to": "BUS_STOP", "clear_width_m": 3.6}
+    ],
+    "goal_node": "BUS_STOP",
+    "goal_tolerance_m": 0.65,
+    "soft_soil_response": {"warning_distance_m": 1.0, "decelerate_to_zero": true, "hard_fail": false, "message": "接地压力接近上限：静态 128 kPa，动态峰值约 256 kPa，软土上限 200 kPa"}
+  },
+  "p0_swarm_budget": {
+    "l0_logical_nodes": 21,
+    "l0_near_meshes": 6,
+    "l0_instanced_far": 15,
+    "l1_logical_result": "online",
+    "l1_near_representative_meshes": 8,
+    "vat_required": false,
+    "independent_rigs_per_drone": false
+  },
+  "required_geometry_gates": [
+    "G01 机体站立包围盒与脚底高度满足阈值",
+    "G02 stowed_transport 实测包络落入集装箱内腔，且肩甲、舱门、无人机挂架无穿插",
+    "G03 cockpit_level 全行程中座舱外框不穿出胸舱，SeatAnchor 世界姿态保持直立",
+    "G04 每顶点恰好一个非零骨权重且值为 1，权重和误差不超过 1e-5",
+    "G05 所有动画关节角不越限，脚底滑动和右掌母线接触误差需实测",
+    "G06 硬化路线净宽不小于 3.6 m，软土触发区不覆盖可通行边",
+    "G07 无默认 Cube、Camera、Light、游离物体和非白名单形态键"
+  ]
+}
