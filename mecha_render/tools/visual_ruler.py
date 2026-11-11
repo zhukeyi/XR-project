@@ -127,6 +127,66 @@ def hull_area(pts):
     return abs(a) * 0.5
 
 
+def v_gap(cov):
+    """V7 剪影内空隙 + V8 宽窄变化 —— 补上「像萝卜」的两个直接量。
+
+    ★ 为什么必须单独量（本轮新加，量出来才知道前面的诊断漏了主项）：
+      「白模感」被归因到大平板（area_ruler），但两张正视图并排一看，
+      最刺眼的差别是**参考的剪影内部破成好多块有缝的件**，我们的是实心的；
+      而且参考每条肢体都是「粗—细—粗—细」（肩粗/肘细/前臂粗/腕细）,
+      我们每条肢体是**等宽柱子**。这两件事与三角数、与大平板都无关。
+
+    void_pct  ：逐行取「该行最左到最右之间未被覆盖的像素」，对全剪影面积取比。
+                = 剪影内部真正透出背景的部分（腋下、腿间、肘后、裆口）。
+    runs      ：逐行覆盖段的平均个数（1 = 一条连通的带；3 = 左右臂 + 躯干三段）。
+    w_cv      ：逐行宽度序列的变异系数（等宽柱子 → 小；纺锤 → 大）。
+    n_pinch   ：宽度序列里「先减后增」的局部极小个数，且两侧落差 > 0.02 H。
+                对应「关节把肢体掐断」的次数。
+    """
+    H, W = cov.shape
+    ys = np.where(cov.any(1))[0]
+    if len(ys) == 0:
+        return dict(void_pct=0.0, runs=0.0, w_cv=0.0, n_pinch=0, wamp=0.0)
+    y0, y1 = int(ys.min()), int(ys.max())
+    widths, voids, runss = [], [], []
+    for y in range(y0, y1 + 1):
+        row = cov[y]
+        xs = np.where(row)[0]
+        if len(xs) == 0:
+            continue
+        lo, hi = int(xs.min()), int(xs.max())
+        span = hi - lo + 1
+        n = int(row.sum())
+        widths.append(span)
+        voids.append(span - n)
+        # 该行连通段数
+        d = np.diff(np.concatenate(([0], row.astype(np.int8), [0])))
+        runss.append(int((d == 1).sum()))
+    widths = np.array(widths, np.float64)
+    Hn = float(y1 - y0 + 1)
+    area = float(cov.sum())
+    # 平滑宽度序列（5 行滑动平均），避免锯齿造成的假极值
+    if len(widths) >= 5:
+        k = np.ones(5) / 5.0
+        sw = np.convolve(widths, k, 'same')
+        sw[:2], sw[-2:] = widths[:2], widths[-2:]
+    else:
+        sw = widths
+    n_pinch = 0
+    for i in range(2, len(sw) - 2):
+        if not (sw[i] < sw[i - 1] and sw[i] <= sw[i + 1]):
+            continue
+        lft = sw[max(0, i - 12):i].max()
+        rgt = sw[i + 1:i + 13].max() if i + 13 <= len(sw) else sw[i + 1:].max()
+        if min(lft, rgt) - sw[i] > 0.02 * Hn:
+            n_pinch += 1
+    return dict(void_pct=float(100.0 * sum(voids) / max(area, 1)),
+                runs=float(np.mean(runss)),
+                w_cv=float(sw.std() / max(sw.mean(), 1e-9)),
+                n_pinch=int(n_pinch),
+                wamp=float(100.0 * (sw.max() - sw.min()) / max(sw.max(), 1)))
+
+
 # ---------------------------------------------------------------- 六个指标
 def v_blank(g, cov):
     """V1 空白块：局部标准差极低、且不在剪影边缘 3px 内的区域。"""
@@ -240,7 +300,8 @@ def metrics(img, cov):
     s = v_silhouette(cov)
     w = v_weight(mag, cov)
     v = v_value(g, cov)
-    return dict(blank=b, rhythm=r, direction=d, sil=s, weight=w, value=v), blank
+    p = v_gap(cov)
+    return dict(blank=b, rhythm=r, direction=d, sil=s, weight=w, value=v, gap=p), blank
 
 
 # ---------------------------------------------------------------- 两条来源
@@ -294,6 +355,9 @@ def main():
                   (m['sil']['isoperimetric'], m['sil']['solidity'],
                    m['weight']['top'], m['weight']['mid'], m['weight']['bot'],
                    m['value']['bins_eff']))
+            print('        空隙 %.1f%% ｜ 每行段数 %.2f ｜ 宽度 cv %.3f ｜ 掐腰 %.0f 处 ｜ 幅 %.0f%%' %
+                  (m['gap']['void_pct'], m['gap']['runs'], m['gap']['w_cv'],
+                   m['gap']['n_pinch'], m['gap']['wamp']))
     dst = os.path.join(OUT, 'visual_ruler.json')
     json.dump(res, open(dst, 'w'), ensure_ascii=False, indent=1)
     print('\n→ ' + dst)
