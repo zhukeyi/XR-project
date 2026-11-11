@@ -3,6 +3,10 @@
 > 编写日期：2026-11-10
 > 基线：`SteelSpine.apk`（IL2CPP/ARM64，16 MB）已在 PICO OS 6 模拟器跑通并截图取证
 > 对照文档：`PICO_OpenXR_机甲参赛技术方案_Unity版.md` v2.1 §10–§13、`制作流程与协作方式.md` §3、`Docs/PICO模拟器能力边界与用法.md` §6.8
+>
+> **2026-11-11 更新：M1 已通过。** 本文档 §1 的三句判断（写在 11-10）已成历史——当天夜里把 OpenXR 底座接上了，
+> 且**在模拟器上跑出了真沉浸式会话**（双眼 1920×1920×2、相机位姿由 OpenXR 驱动）。实测证据与踩坑记录见 §10，
+> 后续 M2 起的排期不变，但 §2 状态表中 4 项 ❌ 已转 ✅。
 
 ---
 
@@ -31,11 +35,12 @@
 | APK 上模拟器 | ✅ | 安装 Success，冷启动 311–1227 ms，见 `Docs/参照/unity_android/01_...png` |
 | 脚本编译门禁 | ✅ | `Tools/compile-check.sh`，28 脚本 0 error |
 | 输入抽象层（8 通道 + 能力位 + 降级） | ✅ 代码已写 | `Core/Inputs/InputRouter.cs`、`InputSources.cs` |
-| **OpenXR 会话 / 6DoF 头显** | ❌ | 无 `com.unity.xr.management`、无 `com.unity.xr.openxr`、无 XR 配置文件 |
-| **双眼立体渲染** | ❌ | 当前为单目 2D 窗口 |
-| **手柄真实输入** | ❌ | `OpenXRControllerSource` 编译通过，但设备位姿拿不到 |
+| **OpenXR 会话 / 6DoF 头显** | ✅ 2026-11-11 | 会话状态到 `FOCUSED`；`HMD pose (0,1.65,0)` 与 `Cam world (0,1.65,0)` 相等（场景里相机初始为原点） |
+| **双眼立体渲染** | ✅ 2026-11-11 | 启动报告 `SinglePassInstanced`；运行时 `SinglePassMultiview`；`Eye tex 1920×1920 vol=2` |
+| **手柄真实输入** | ⚠️ 部分 | 旧版 `InputDevices` 能枚举 HMD 且位姿有效；**手柄位姿无数据**（模拟器无手柄，且 interaction profile 落到 `hand_interaction_ext`）→ 手柄必须走 Input System，见 §10.4 |
 | 座舱空间 / 座舱内构 | ❌ | 场景里只有机体 + 相机 + 两盏灯 |
 | 任何交互（抓杆/面板/光剑） | ❌ | 无 |
+| **HUD / UI 底座** | ✅ 2026-11-11 | world-space Canvas 在立体渲染下正常显示（IMGUI 不可用，见 §10.3） |
 | URP | ❌ | 工程是 Built-in（`m_CustomRenderPipeline: {fileID: 0}`），与方案 v2.1 声明的 URP 14 不符 |
 
 **一个容易被忽略的好消息**：输入层不是从零开始。`IInputSource` 已经把转向、俯仰、油门、扳机、握持、助推、菜单、面板选择归成 8 个抽象通道，并带能力位与优先级降级。换设备时改的是「谁供这个通道」，不是 gameplay。这意味着接 OpenXR 的成本主要在**一个适配类**，而不是整个输入系统重写。
@@ -218,6 +223,119 @@
 3. **语音降到 8 条核心提示**，其余用字幕与音效。
 
 **触发线**：若 M1 到 11/13 仍未跑通 immersive，则直接切到「平面大屏 + 座舱全景」的降级演示形态，把节省下来的 30–40 h 全部投入流程闭环与视频——**这仍然是一个完整的参赛作品，只是一个不戴头显也能打动评委的版本**。
+
+> **该触发线未触发（2026-11-11）**：M1 已于 11-11 凌晨跑通真沉浸式（见 §10.1），因此**保留完整沉浸式路线**，不降级。
+> 三条 P0 砍项仍建议执行——它们砍的是内容体量，与沉浸形态无关，省下来的时间正好补 M1 这一格的消耗。
+
+---
+
+## 10 M1 实测记录（2026-11-11）
+
+### 10.1 验收证据链
+
+四条验收条件全部拿到运行时证据，不是"看起来像"：
+
+| 验收条件 | 证据 | 来源 |
+|---|---|---|
+| ① 以 immersive 会话启动 | `OpenXRSession::HandleSessionStateChangedEvent` 走完 `IDLE → READY → SYNCHRONIZED → VISIBLE → FOCUSED` | logcat（Unity tag） |
+| ①' 由系统合成器接管 | `PxrMetric: ... LayerCnt=1 Pkg=com.steelspine.smoke FrmId=...`，`APxrRuntime: PXRSDK_PM ENGINE FPS` | logcat（PICO tag） |
+| ② 双眼立体 | 启动报告 `Stereo Rendering Mode: SinglePassInstanced`；运行时 `XRSettings.stereoRenderingMode = SinglePassMultiview`；`XRSettings.eyeTextureDesc = 1920×1920 vol=2` | logcat + 屏内 HUD |
+| ③ 头显姿态由 OpenXR 驱动 | `HMD pose (0.00,1.65,0.00)` 与 `Cam world (0.00,1.65,0.00)` 完全相等，而场景里相机 `localPosition` 与 XR Origin 都是原点 | 屏内 HUD |
+| ④ 能看见 3D 内容 | 截图：直立机体居中、地面向远处延伸、地平线落在 1.65 m 眼高的正确位置 | `/tmp/xr5.png` |
+
+**关于 `SinglePassInstanced` 与 `SinglePassMultiview` 的差异**：前者是 Unity 侧的渲染模式名，后者是运行时在 GLES3 上采用的具体实现（`GL_OVR_multiview` 一类的多视图扩展）。两者都是"一次绘制两张眼图"的单通道方案，对性能的意义相同，**不需要为这个差异做任何处理**。
+
+### 10.2 坑一：Unity batchmode 不读 EditorPrefs 里的 JDK 路径
+
+现象：`UnityException: JDK not found`，但 `~/.local/jdk/jdk11/Contents/Home/bin/java` 明明可执行。
+
+排查过程与结论：
+
+| 尝试 | 结果 |
+|---|---|
+| `defaults write` 写 `JdkPath` 到 `com.unity3d.UnityEditor5.x.plist` | ❌ 仍报 JDK not found |
+| 在 Unity 进程内 `EditorPrefs.SetString("JdkPath", ...)` | ❌ 仍报 |
+| 反射写 `AndroidExternalToolsSettings.jdkRootPath` | ❌ 该类型 `ScriptableObject.CreateInstance` 返回 null，asset 建不出来 |
+| **给 Unity 进程传 `JAVA_HOME` 环境变量** | ✅ 通过，紧接着报 `Android NDK not found` |
+| **再传 `ANDROID_SDK_ROOT` / `ANDROID_HOME` / `ANDROID_NDK_ROOT`** | ✅ 构建 Success |
+
+**结论**：Unity 2022.3.62f3 在 batchmode 下走的是环境变量（或至少在 Tools 设置缺失时以环境变量兜底），`JAVA_HOME` 必须指向 macOS bundle 内的 `Contents/Home`，**不是 bundle 根**。
+
+已固化为 `scripts/build_xr.sh`，一条命令完成"环境自检 + 构建 + 产物校验"：
+
+```bash
+./scripts/build_xr.sh          # 构建
+./scripts/build_xr.sh --no-build   # 只做环境自检
+```
+
+另一个必须注意的点：**Unity 必须非沙箱运行**。沙箱会拦住 Unity 写 `~/Library/Application Support/Unity`，表现为构建在 Gradle 阶段无声中断、日志里只有 `file-delete` 被拒的记录。
+
+### 10.3 坑二：IMGUI 在 XR 立体渲染下完全不显示
+
+第一版 HUD 用的是 `OnGUI()`（IMGUI）。平面 APK 上正常，切到 OpenXR 后截图里**一个像素的文字都没有**，只有 3D 场景。
+
+原因：IMGUI 走的是独立的 GUI 渲染通道，不参与 XR 的立体渲染，在 `SinglePassInstanced` 下被整体跳过。
+
+**这条对后续排期有直接影响**：座舱里所有 UI（HUD、全息面板、按钮）只能走 **world-space Canvas**，不能用 IMGUI 快速搭原型。已改写 `Core/Render/XrStatus.cs` 为 world-space Canvas 实现，并作为 M4 座舱 UI 的底座：
+
+- Canvas `renderMode = WorldSpace`，挂在相机下（head-locked），距眼 1.6 m
+- 比例 `1 canvas unit = 1 mm`，便于用物理尺寸排版（HUD 宽 0.46 m，字高 19 mm）
+- 必须有半透明底板，否则浅色文字压在白色地面上读不出来
+
+### 10.4 结论：手柄输入必须重写为 Input System
+
+`XrStatus` 是刻意做成"实验装置"的——它用**旧版** `UnityEngine.XR.InputDevices` 读设备。实测输出：
+
+```
+HMD pose  : (0.00,1.65,0.00)     ← 有效
+L hand    : (0.00,0.00,0.00) trig=0 grip=0
+R hand    : (0.00,1.65,0.00) trig=0 grip=0
+```
+
+- HMD：`isValid = true` 且位姿有效 → **旧 API 对头显可用**
+- 手柄：`isValid = true` 但位姿恒为默认值、按键恒 0 → **旧 API 对手柄拿不到数据**
+
+同时 logcat 给出原因：
+
+```
+SPR-OpenXRInteractionManager: Current interaction profile：/interaction_profiles/ext/hand_interaction_ext
+SPR-OpenXRInteractionManager: Current controller type ：8
+```
+
+因为 §10.5 的 `controller` 标记被删掉，runtime 把交互 profile 落到了**手部追踪**而不是 PICO Touch 手柄。真机上手柄在场时会切回 `.../pico4_controller` 一类 profile，但旧 API 的 `CommonUsages` 映射在 OpenXR 下本来就不可靠。
+
+**决策**：`Core/Inputs/InputSources.cs` 里的 `OpenXRControllerSource` 必须改写为 Input System 的 action（`<PICO4Controller>{LeftHand}/triggerPressed` 等），**不要再寄望旧 API**。这是 M3 的第一件事。上层 `IInputSource` / `InputRouter` 抽象（8 通道 + 能力位 + 优先级降级）不用动。
+
+### 10.5 坑三：PICO 的 `controller` 元数据会拦住启动
+
+装好 OpenXR APK 后点图标，进程根本不创建，只弹一个"需要使用手柄"对话框。系统拒绝理由在 logcat 里：
+
+```
+I AppStartInterceptManager: Intercepted for ControllerOnly: No controller paired. Pkg: com.steelspine.smoke
+W ActivityTaskManager: addPendingControllerOnlyLaunchItem ...
+```
+
+来源是 PICO OpenXR SDK 的 `Editor/PICOModifyAndroidManifest.cs:AddPICOMetaData()`——除非把"手部追踪"设为 `HandsOnly`，否则它一定往 manifest 写：
+
+```xml
+<meta-data android:name="controller" android:value="1" />
+```
+
+而模拟器里 `pxrcontrollerservice` 两个手柄都是 `state=offline`、`bindstatus=0`，且**没有 `cmd` 接口**（`cmd pxrcontrollerservice` → `Failed transaction`），配对状态无法伪造。
+
+解决办法（已落地为 `Assets/_Project/Scripts/Editor/StripControllerOnly.cs`）：实现 `IPostGenerateGradleAndroidProject`，`callbackOrder = 100`（排在 SDK 的 `1` 之后），在 manifest 生成后删掉这一行。这不是 hack——SDK 自己的 `HandsOnly` 分支做的就是 `DeleteAndroidMetaData("controller")`。
+
+**代价**：无手柄时交互落空（见 §10.4）。M1 只验证渲染与位姿，不受影响；M3 之后按真机实际形态决定是否恢复。
+
+### 10.6 模拟器侧的两个环境坑
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| `pico-cli emulator start` 报 `Cannot determine process identity before acquiring file lock` | 本机 `ps` 被系统权限拦截（`operation not permitted: ps`），pico-cli 拿不到自己的启动时间 | 绕过 pico-cli，直接跑 emulator 二进制，并把 AVD 克隆到可写目录：`HOME=/tmp/pico-run ANDROID_AVD_HOME=/tmp/pico-run/avd <sdk>/emulator -avd demo -sysdir <sdk>/system-images/system-images -gpu angle_indirect` |
+| emulator 报 `filesystem error: in remove: Operation not permitted [.../hardware-qemu.ini.new]` | `~/.pico/avd` 在当前执行环境里不可写 | 同上，AVD 整目录 `cp -cR` 到 `/tmp/pico-run/avd`，`demo.ini` 的 `path` 指过去 |
+| `adb: device offline` | 模拟器连跑十几小时后 adb 通道会掉 | 安装/启动脚本要带重试（`adb get-state` 轮询 + `install` 重试），不能假设一次成功 |
+
+补充：模拟器本身是**完整的 PICO OS 6 环境**（360° 全景房间 + 桌面 + 设置），不是空壳。装上去的 VR 应用会被系统识别成 VR 应用（`pvr.app.type=vr`），这是"出包正确"的第一个信号。
 
 ---
 

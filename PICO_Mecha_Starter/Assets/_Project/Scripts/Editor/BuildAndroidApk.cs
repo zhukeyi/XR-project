@@ -61,7 +61,7 @@ namespace SteelSpine.EditorTools
 
         // ---------------- Player Settings ----------------
 
-        static void ConfigurePlayer()
+        internal static void ConfigurePlayer()
         {
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
             {

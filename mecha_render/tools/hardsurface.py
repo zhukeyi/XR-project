@@ -42,7 +42,13 @@ def rect8(xa, xb, za, zb, c=0.0):
         za, zb = zb, za
     if c <= EPS:
         return [(xa, za), (xb, za), (xb, zb), (xa, zb)]
-    c = min(c, 0.48 * min(xb - xa, zb - za))
+    # ★ 全局倒角增益（视觉尺 W0/W1）：参考机体的斜线能量有相当一部分来自
+    #   「每块板件倒角处的斜边」。原倒角 0.03–0.09 m 在 700 px 渲染里只有 2–6 px，
+    #   相对 30–120 px 的长直边可忽略 → 于是整机的边缘方向被长直边垄断。
+    #   放大到 1.9 倍之后，每块板从「矩形」变成「明显的八边形」，
+    #   斜边变长、且这是真实的几何去方，不是刷指标。
+    #   上限 0.48·min(w,h) 保持不变（不会退化成菱形）。
+    c = min(c * CHAMFER_GAIN, 0.48 * min(xb - xa, zb - za))
     return [(xa + c, za), (xb - c, za), (xb, za + c), (xb, zb - c),
             (xb - c, zb), (xa + c, zb), (xa, zb - c), (xa, za + c)]
 
@@ -175,6 +181,23 @@ def loft_sym(xhalf, secs_yz, **kw):
     return loft_poly(out, **kw)
 
 
+CHAMFER_GAIN = 1.9   # 全局倒角增益（见 rect8 注释）
+
+
+def signed_area(poly):
+    """轮廓有向面积（x 右、y 上）。>0 = 逆时针。
+
+    loft_z 的侧面法线由截面绕向决定：顺时针 = 法线朝里 = 单面渲染时整块发黑。
+    """
+    a = 0.0
+    n = len(poly)
+    for i in range(n):
+        x0, y0 = poly[i]
+        x1, y1 = poly[(i + 1) % n]
+        a += x0 * y1 - x1 * y0
+    return 0.5 * a
+
+
 def loft_z(secs, cap=True):
     """沿 Z 逐层放样：secs = [(z, [(x, y), ...]), ...]，按 z 递增。
 
@@ -183,6 +206,8 @@ def loft_z(secs, cap=True):
     再沿前后方向收薄。沿 Z 放样才有这个自由度。
     **注意**：这里的多边形在 (x, y) 平面内（x 向右、y 向上），不是 (x, z)。
     """
+    secs = [(z, (list(p) if signed_area(p) >= 0 else list(p)[::-1]))
+            for (z, p) in secs]
     n = len(secs[0][1])
     for s in secs:
         if len(s[1]) != n:
