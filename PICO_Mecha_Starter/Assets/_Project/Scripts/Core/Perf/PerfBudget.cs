@@ -147,6 +147,7 @@ namespace SteelRidge.Core.Perf
         float _next;
         bool _warnedTri;
         bool _warnedDc;
+        bool _warnedApprox;
 
         public void Apply(in PlatformCapabilities caps)
         {
@@ -170,6 +171,7 @@ namespace SteelRidge.Core.Perf
 
             int tris = 0;
             int count = 0;
+            bool approximated = false;
             _materials.Clear();
 
             foreach (var r in renderers)
@@ -182,11 +184,11 @@ namespace SteelRidge.Core.Perf
                 {
                     var mf = r.GetComponent<MeshFilter>();
                     if (mf != null && mf.sharedMesh != null)
-                        tris += (int)(mf.sharedMesh.triangles.Length / 3L);
+                        tris += Tris(mf.sharedMesh, ref approximated);
                 }
                 else if (r is SkinnedMeshRenderer smr && smr.sharedMesh != null)
                 {
-                    tris += (int)(smr.sharedMesh.triangles.Length / 3L);
+                    tris += Tris(smr.sharedMesh, ref approximated);
                 }
 
                 foreach (var m in r.sharedMaterials)
@@ -195,6 +197,15 @@ namespace SteelRidge.Core.Perf
 
             LastTriangles = tris;
             LastRenderers = count;
+
+            if (approximated && !_warnedApprox)
+            {
+                _warnedApprox = true;
+                // 为什么要近似：FBX 默认 Read/Write off（省显存、也省一份 CPU 副本），
+                // 此时 mesh.triangles 会**逐 mesh 抛一条错误日志**——242 个零件的模型
+                // 每帧刷 242 条 E/Unity，既掩盖真实报错又把 logcat 打满（2026-11-11 实测）。
+                Debug.Log("[PerfBudget] 存在不可读 mesh，三角面改用顶点数近似（误差 ±30%）");
+            }
 
             if (!_warnedTri && tris > Budget.Triangles)
             {
@@ -210,8 +221,26 @@ namespace SteelRidge.Core.Perf
             }
         }
 
-        public List<string> Report()
+        /// <summary>
+        /// 取 mesh 的三角面数。不可读 mesh 走顶点数近似。
+        ///
+        /// 为什么不能直接读 triangles
+        ///   FBX 导入默认 Read/Write off（isReadable=false），此时访问 mesh.triangles
+        ///   会抛 InvalidOperationException 并**逐 mesh 打一条 E/Unity**。
+        ///   机甲的 242 个零件会把这个面板每帧刷成 242 条错误，
+        ///   真实报错被埋掉、logcat 直接被冲掉（2026-11-11 在 PICO 模拟器上实测）。
+        ///   近似系数取 /2：Unity 对硬边零件会拆顶点，一个 box 是 24 顶点 / 12 三角形；
+        ///   平滑曲面会略高估，宁可偏保守。
+        /// </summary>
+        static int Tris(Mesh mesh, ref bool approximated)
         {
+            if (mesh == null) return 0;
+            if (mesh.isReadable) return (int)(mesh.triangles.LongLength / 3L);
+            approximated = true;
+            return Mathf.Max(0, mesh.vertexCount / 2);
+        }
+
+        public List<string> Report()        {
             var lines = new List<string>
             {
                 $"档位：{Budget.Tier}",

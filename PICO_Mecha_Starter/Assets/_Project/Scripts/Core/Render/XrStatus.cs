@@ -19,6 +19,7 @@
 // logcat，便于无截图时取证。
 
 using System.Text;
+using SteelRidge.Core.Inputs;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR;
@@ -154,6 +155,11 @@ namespace SteelSpine.Render
                                ? "(none)" : XRSettings.loadedDeviceName));
             _sb.AppendLine("Stereo    : " + XRSettings.stereoRenderingMode
                            + "   eye: " + (cam != null ? cam.stereoTargetEye.ToString() : "no cam"));
+            // 管线与清除设置：M1 转 URP 后，「画面是否还按相机 bg 清屏」必须能一眼看到。
+            // 实测（2026-11-11，URP 14.0.12 + 模拟器）出现过背景全黑、地面不见，
+            // 只有把 clearFlags / backgroundColor / 管线名同时打出来，
+            // 才能区分「清屏没生效」和「相机位姿跑到地面以下，单面地面被背面剔除」。
+            _sb.AppendLine("Pipeline  : " + PipelineName(cam));
             // eyeTextureDesc 是「是否真立体」的直接证据：
             // SinglePass 下 width 为单眼宽、volumeDepth=2（或用 2× 宽打包双眼）
             var desc = XRSettings.eyeTextureDesc;
@@ -169,15 +175,31 @@ namespace SteelSpine.Render
                 ? string.Format("({0:F2},{1:F2},{2:F2})", cam.transform.position.x,
                                 cam.transform.position.y, cam.transform.position.z)
                 : "no cam"));
-            _sb.AppendLine("L hand    : " + Hand(_left));
-            _sb.AppendLine("R hand    : " + Hand(_right));
+            _sb.AppendLine("L hand(IS): " + HandIs(false));
+            _sb.AppendLine("R hand(IS): " + HandIs(true));
             _sb.AppendLine("Mecha     : " + distanceHint + " m ahead (+Z)");
             return _sb.ToString();
         }
 
-        static string Pose3(InputDevice d)
+        /// <summary>
+        /// 一行说明当前生效的渲染管线 + 相机清屏方式。
+        /// 用 GraphicsSettings.currentRenderPipeline 而非自己记的字段：
+        /// 它读的是「真正生效的那个」，能暴露「资产建了但没挂上」这类问题。
+        /// </summary>
+        static string PipelineName(Camera cam)
         {
-            if (!d.isValid) return "invalid";
+            var asset = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+            string pipe = asset != null ? asset.name + "(" + asset.GetType().Name + ")" : "Built-in";
+            if (cam == null) return pipe + "  cam=none";
+            var bg = cam.backgroundColor;
+            return pipe + "  clear=" + cam.clearFlags
+                        + " bg=" + bg.r.ToString("F2") + "/" + bg.g.ToString("F2") + "/" + bg.b.ToString("F2")
+                        + " a=" + bg.a.ToString("F2")
+                        + " MSAA=" + (cam.allowMSAA ? "on" : "off");
+        }
+
+        static string Pose3(InputDevice d)
+        {            if (!d.isValid) return "invalid";
             return d.TryGetFeatureValue(CommonUsages.devicePosition, out var p)
                 ? string.Format("({0:F2},{1:F2},{2:F2})", p.x, p.y, p.z)
                 : "no pose";
@@ -189,6 +211,31 @@ namespace SteelSpine.Render
             string trig = d.TryGetFeatureValue(CommonUsages.triggerButton, out var t) ? (t ? "1" : "0") : "-";
             string grip = d.TryGetFeatureValue(CommonUsages.gripButton, out var g) ? (g ? "1" : "0") : "-";
             return Pose3(d) + " trig=" + trig + " grip=" + grip;
+        }
+
+        /// <summary>
+        /// Input System 侧的手柄摘要。相比旧 API 多出三样关键信息：
+        /// isTracked（T/-）、摇杆连续值、扳机/握持连续值 —— 座舱抓杆与射线都依赖它们。
+        /// 实测对照见 Docs/里程碑_OpenXR沉浸式.md §11。
+        /// </summary>
+        static string HandIs(bool right)
+        {
+            var d = right ? OpenXrDevices.Right : OpenXrDevices.Left;
+            if (d == null || !d.added) return "none";
+
+            string trk = OpenXrDevices.IsTracked(d) ? "T" : "-";
+
+            string pos = OpenXrDevices.ReadPose(d, out var p)
+                ? string.Format("({0:F2},{1:F2},{2:F2})", p.x, p.y, p.z)
+                : "nopose";
+
+            string trig = OpenXrDevices.ReadFloat(d, "trigger", out var t) ? t.ToString("F2") : "-";
+            string grip = OpenXrDevices.ReadFloat(d, "grip", out var g) ? g.ToString("F2") : "-";
+            string stick = OpenXrDevices.ReadStick(d, out var s)
+                ? string.Format("{0:F1}/{1:F1}", s.x, s.y)
+                : "-";
+
+            return string.Format("{0} {1} trig={2} grip={3} stick={4}", trk, pos, trig, grip, stick);
         }
 
         // ---------------- 平面模式后备 ----------------

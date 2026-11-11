@@ -114,11 +114,20 @@ namespace SteelRidge.Core.Platform
 
         void BuildSources()
         {
-            // 键盘永远第一位：编辑器与模拟器没有手柄时，它是唯一能让驾驶逻辑跑起来的东西
-            Router.Add(new KeyboardDebugSource());
-
+            // 顺序 = 优先级 = 审计报告里显示的那个"← 谁"。
+            // 2026-11-11 修正：原先键盘源排第一，导致设备上审计输出成
+            //   [OK] Trigger ← Keyboard/Mouse
+            // 这在 VR 平台上是一句**误导性结论**（读的人会以为手柄没接上）。
+            // 键盘是调试兜底、手柄是产品输入，所以手柄在前、键盘最后。
+            // 编辑器里 Caps.Has6DoFController 为 false，手柄源根本不注册，
+            // 键盘仍会独占全部通道，调试体验不变。
             if (Caps.Has6DoFController)
             {
+                // Input System 源优先：它能拿到 isTracked / trackingState / devicePose，
+                // 旧版 XR 源只能拿到按钮与裸位姿（详见 OpenXrControllerSource.cs 顶部实测记录）。
+                var isys = new OpenXrControllerSource { RightHand = true };
+                Router.Add(isys);
+
                 var stick = new ControllerStickSource();
                 stick.SetNode(UnityEngine.XR.XRNode.RightHand);
                 Router.Add(stick);
@@ -138,6 +147,9 @@ namespace SteelRidge.Core.Platform
                 };
                 Router.Add(gaze);
             }
+
+            // 键盘永远最后：只在上面所有源都供不出值时才轮到它
+            Router.Add(new KeyboardDebugSource());
         }
 
         /// <summary>

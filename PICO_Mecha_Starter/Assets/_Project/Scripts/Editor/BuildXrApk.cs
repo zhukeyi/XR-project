@@ -135,9 +135,18 @@ namespace SteelSpine.EditorTools
             ground.name = "GROUND_Ref";
             ground.transform.position = new Vector3(0f, 0f, MechaDistance * 0.5f);
             ground.transform.localScale = new Vector3(8f, 1f, 8f);
-            var gm = new Material(Shader.Find("Standard"));
-            gm.color = new Color(0.16f, 0.19f, 0.24f);
+
+            // 2026-11-11：URP 生效后 Shader.Find("Standard") 仍能返回 shader，
+            // 但 Standard 不在 URP 的着色器集合里 —— 跑起来是整片洋红（已知症状）。
+            // ① 按当前管线选 shader；② 颜色按属性名分流（Standard 认 _Color，URP/Lit 认 _BaseColor）；
+            // ③ 材质必须落成**真实资产**：编辑器里 new 出来的 Material 没有资产路径，
+            //    场景序列化时引用会丢，包里就变回默认材质。
+            bool urp = GraphicsSettings.defaultRenderPipeline != null;
+            var gm = EnsureGroundMaterial(urp);
             ground.GetComponent<Renderer>().sharedMaterial = gm;
+            Debug.Log("[BuildXr] 地面材质 " + AssetDatabase.GetAssetPath(gm) +
+                      "｜shader=" + (gm.shader != null ? gm.shader.name : "null") +
+                      "｜管线=" + (urp ? "URP" : "Built-in"));
 
             // ---------- 灯光 ----------
             var keyGo = new GameObject("LIGHT_Key");
@@ -162,11 +171,60 @@ namespace SteelSpine.EditorTools
             var status = origin.AddComponent<SteelSpine.Render.XrStatus>();
             status.distanceHint = MechaDistance;
 
+            // ---------- 平台装配根 ----------
+            // 2026-11-11 发现：此前场景里**没有** PlatformBootstrap，于是 DisplayPolicy / SpatialAudio /
+            // InputRouter / PerfBudgetEnforcer / TrackingQualityMonitor 全是躺着的类 ——
+            // 输入路由写了却没人 Tick，审计报告里的 [OK]/[MISSING] 也从未在设备上出现过。
+            // 放在最后创建：它 Awake 里要 FindAnyObjectByType 找相机与各策略组件，先有它们再找才成立。
+            var bootGo = new GameObject("PLATFORM_Bootstrap");
+            var boot = bootGo.AddComponent<SteelRidge.Core.Platform.PlatformBootstrap>();
+            boot.viewpoint = camGo.transform;
+            boot.cockpitRoot = null;   // 座舱（M4）落地后再指过去；为空时 ViewpointPolicy 自动跳过
+
             UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.Refresh();
 
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             Debug.Log("[BuildXr] 场景已生成 " + ScenePath);
+        }
+
+        // ---------------- 地面材质 ----------------
+
+        const string MaterialDir = "Assets/_Project/Materials";
+        const string GroundMatPath = MaterialDir + "/GROUND_Ref_Mat.mat";
+
+        /// <summary>
+        /// 取或建地面材质资产。已存在时只校正 shader（管线切换后残留 Standard 也能自愈）。
+        /// </summary>
+        static Material EnsureGroundMaterial(bool urp)
+        {
+            if (!AssetDatabase.IsValidFolder(MaterialDir))
+                AssetDatabase.CreateFolder("Assets/_Project", "Materials");
+
+            var shader = urp
+                ? Shader.Find("Universal Render Pipeline/Lit")
+                : Shader.Find("Standard");
+            if (shader == null) shader = Shader.Find("Standard");
+
+            var m = AssetDatabase.LoadAssetAtPath<Material>(GroundMatPath);
+            if (m == null)
+            {
+                m = new Material(shader) { name = "GROUND_Ref_Mat" };
+                AssetDatabase.CreateAsset(m, GroundMatPath);
+            }
+            else if (m.shader != shader)
+            {
+                m.shader = shader;
+            }
+
+            var color = new Color(0.16f, 0.19f, 0.24f);
+            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", color);
+            if (m.HasProperty("_Color")) m.SetColor("_Color", color);
+            if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.25f);
+            if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.25f);
+            EditorUtility.SetDirty(m);
+            AssetDatabase.SaveAssets();
+            return m;
         }
 
         // ---------------- 构建 ----------------

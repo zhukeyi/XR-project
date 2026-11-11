@@ -1,7 +1,12 @@
 {
     "name": "SteelSpine.Editor.Urp",
     "rootNamespace": "SteelSpine.EditorTools.Urp",
-    "references": [],
+    "references": [
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Core.Editor",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Universal.Editor"
+    ],
     "includePlatforms": [
         "Editor"
     ],

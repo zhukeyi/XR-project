@@ -6,6 +6,8 @@
 
 ### 变更
 
+- **渲染管线切到 URP 14.0.12**（ADR 待补）：不经 registry——`packages.unity.com` 对本机与 Oracle 服务器解析到同一 IP，索引里没有 14.x；改用编辑器自带 `BuiltInPackages` 离线解析。设备实测 `Pipeline : URP_Asset(UniversalRenderPipelineAsset)`、11 个材质全部 URP/Lit、`Eye tex 1920×1920 vol=2` 立体不受影响。详见 `PICO_Mecha_Starter/Docs/里程碑_OpenXR沉浸式.md` §12。
+- **M3 输入层代码路径打通**：新增 `InputSystemProbe`（运行时设备树探针）与 `OpenXrControllerSource`（Input System 版手柄源），`PlatformBootstrap` 装配根补进场景。见同文档 §11。
 - **资产导出冻结**（ADR-006）：造型修改中，暂停一切 glTF / FBX / VAT 导出；解冻后一次性出 `mecha_793.glb`。`02_资产交付规格` 顶部加冻结横幅，避免被误当作当天任务执行。
 - `00_项目状态_v0.1.md` §1 加状态更新、§5 第 4 项改「P0 阻塞（外部）」、§6 两周路线改为「终点固定、范围可裁」、新增 §6.1 冻结期可并行的六项（约 3.5 人日）。
 

@@ -549,10 +549,12 @@ namespace SteelRidge.EditorTools
         {
             var r = new InputRouter();
             r.Configure(caps);
-            r.Add(new KeyboardDebugSource());
 
+            // 与 PlatformBootstrap.BuildSources 保持同序（手柄 → 手部 → 注视 → 键盘兜底），
+            // 否则审计报告里的"← 谁"会和设备实际行为不一致。
             if (caps.Has6DoFController)
             {
+                r.Add(new OpenXrControllerSource { RightHand = true });
                 var stick = new ControllerStickSource();
                 stick.SetNode(UnityEngine.XR.XRNode.RightHand);
                 r.Add(stick);
@@ -562,6 +564,8 @@ namespace SteelRidge.EditorTools
 
             if ((caps.Inputs & InputCapability.Gaze) != 0)
                 r.Add(new GazeSource { DwellSeconds = caps.IsAdditive ? 1.0f : 1.4f });
+
+            r.Add(new KeyboardDebugSource());
 
             r.Tick(0f);
             return r;

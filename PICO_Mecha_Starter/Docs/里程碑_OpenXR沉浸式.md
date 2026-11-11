@@ -7,6 +7,17 @@
 > **2026-11-11 更新：M1 已通过。** 本文档 §1 的三句判断（写在 11-10）已成历史——当天夜里把 OpenXR 底座接上了，
 > 且**在模拟器上跑出了真沉浸式会话**（双眼 1920×1920×2、相机位姿由 OpenXR 驱动）。实测证据与踩坑记录见 §10，
 > 后续 M2 起的排期不变，但 §2 状态表中 4 项 ❌ 已转 ✅。
+>
+> **2026-11-11 第二次更新：M3 输入层代码路径打通。** 用运行时设备树探针取证，确认 PICO4 Ultra
+> 左右手柄都已在 Input System 里注册（`usages=LeftHand/RightHand`），8 个控件名 8/8 命中；
+> 同时**更正了 §10.4 的一处错误归因**（旧 API 并非失效，而是缺 `isTracked/trackingState/devicePose`）。
+> 模拟器不能产生手柄输入这一能力边界也一并记入 §11.4。
+>
+> **2026-11-11 第三次更新：URP 14 已落地。** 阻塞点不在网络——本机与 Oracle 服务器解析到的
+> `packages.unity.com` 是同一个 IP，索引里根本没有 14.x。真正的解法是**编辑器自带的内置包**
+> （`BuiltInPackages` 里有 URP/Core/ShaderGraph 14.0.12），UPM 直接链接、离线解析。
+> 现已出包并在模拟器验证：`Pipeline : URP_Asset(UniversalRenderPipelineAsset)`、
+> 机体 11 个材质全部 URP/Lit、`Eye tex 1920×1920 vol=2` 立体不受影响。全记录见 §12。
 
 ---
 
@@ -37,11 +48,11 @@
 | 输入抽象层（8 通道 + 能力位 + 降级） | ✅ 代码已写 | `Core/Inputs/InputRouter.cs`、`InputSources.cs` |
 | **OpenXR 会话 / 6DoF 头显** | ✅ 2026-11-11 | 会话状态到 `FOCUSED`；`HMD pose (0,1.65,0)` 与 `Cam world (0,1.65,0)` 相等（场景里相机初始为原点） |
 | **双眼立体渲染** | ✅ 2026-11-11 | 启动报告 `SinglePassInstanced`；运行时 `SinglePassMultiview`；`Eye tex 1920×1920 vol=2` |
-| **手柄真实输入** | ⚠️ 部分 | 旧版 `InputDevices` 能枚举 HMD 且位姿有效；**手柄位姿无数据**（模拟器无手柄，且 interaction profile 落到 `hand_interaction_ext`）→ 手柄必须走 Input System，见 §10.4 |
+| **手柄真实输入** | 🟡 代码通、信号缺 | 2026-11-11 取证：Input System 里左右手柄都已注册（`usages=LeftHand/RightHand`），8 个控件名 8/8 命中；`OpenXrControllerSource` 已接入路由。**但模拟器不产生手柄输入**（右手柄 `isTracked=1` 却钉在头的位置，左手柄 `isTracked=0`），物理信号需真机验证。见 §11 |
 | 座舱空间 / 座舱内构 | ❌ | 场景里只有机体 + 相机 + 两盏灯 |
 | 任何交互（抓杆/面板/光剑） | ❌ | 无 |
 | **HUD / UI 底座** | ✅ 2026-11-11 | world-space Canvas 在立体渲染下正常显示（IMGUI 不可用，见 §10.3） |
-| URP | ❌ | 工程是 Built-in（`m_CustomRenderPipeline: {fileID: 0}`），与方案 v2.1 声明的 URP 14 不符 |
+| URP | ✅ 2026-11-11 | 已切 URP 14.0.12。**不走 registry**：用 Unity 安装包自带的 `BuiltInPackages`，离线解析。设备实测 `Pipeline : URP_Asset(UniversalRenderPipelineAsset)`，机体 11 个材质全部 URP/Lit，立体与位姿验收不受影响。见 §12 |
 
 **一个容易被忽略的好消息**：输入层不是从零开始。`IInputSource` 已经把转向、俯仰、油门、扳机、握持、助推、菜单、面板选择归成 8 个抽象通道，并带能力位与优先级降级。换设备时改的是「谁供这个通道」，不是 gameplay。这意味着接 OpenXR 的成本主要在**一个适配类**，而不是整个输入系统重写。
 
@@ -306,6 +317,11 @@ SPR-OpenXRInteractionManager: Current controller type ：8
 
 **决策**：`Core/Inputs/InputSources.cs` 里的 `OpenXRControllerSource` 必须改写为 Input System 的 action（`<PICO4Controller>{LeftHand}/triggerPressed` 等），**不要再寄望旧 API**。这是 M3 的第一件事。上层 `IInputSource` / `InputRouter` 抽象（8 通道 + 能力位 + 优先级降级）不用动。
 
+> **2026-11-11 更正（见 §11）**：上面这条"旧 API 对手柄拿不到数据"的判断**部分不成立**。用 Input System 探针取证后发现：
+> 旧 API 的 `isValid` 其实是 `true`、设备名与 `Left/Right` 特征位都对，拿到的位姿 `(0,0,0)` / `(0,1.65,0)` 是**模拟器没在跟踪手柄**导致的默认值，不是 API 缺陷。
+> 真正站得住的理由是：旧 API 暴露不出 `isTracked` / `trackingState` / `devicePose`（含角速度），而座舱抓杆与射线需要这三样。
+> 结论方向不变（改 Input System），但**归因换了**——这个区别很重要，否则上真机时会被"旧 API 明明能用"打脸。
+
 ### 10.5 坑三：PICO 的 `controller` 元数据会拦住启动
 
 装好 OpenXR APK 后点图标，进程根本不创建，只弹一个"需要使用手柄"对话框。系统拒绝理由在 logcat 里：
@@ -336,6 +352,247 @@ W ActivityTaskManager: addPendingControllerOnlyLaunchItem ...
 | `adb: device offline` | 模拟器连跑十几小时后 adb 通道会掉 | 安装/启动脚本要带重试（`adb get-state` 轮询 + `install` 重试），不能假设一次成功 |
 
 补充：模拟器本身是**完整的 PICO OS 6 环境**（360° 全景房间 + 桌面 + 设置），不是空壳。装上去的 VR 应用会被系统识别成 VR 应用（`pvr.app.type=vr`），这是"出包正确"的第一个信号。
+
+---
+
+## 11 M3 输入层实测记录（2026-11-11）
+
+M1 只证到"渲染与头显位姿通了"，输入层当时只有一句猜测（§10.4）。本节把它做成实证：
+**设备到底在不在、控件到底叫什么、模拟器能给到什么程度**。
+
+### 11.1 取证方法：运行时设备树探针
+
+新增 `Assets/_Project/Scripts/Core/Inputs/InputSystemProbe.cs`，用
+`[RuntimeInitializeOnLoadMethod(AfterSceneLoad)]` 自动挂载，不需要改场景、不影响出包流程。
+它做三件事：
+
+| 步骤 | 内容 | 目的 |
+|---|---|---|
+| t0 | `InputSystem.devices` 全表 + XR 相关设备的全部控件与当前值 | 判断设备是否存在、控件命名、当前状态 |
+| t1 | 90 帧后复采一次 | 判断设备是否**异步注册**（PICO 运行时常见） |
+| 自检 | 按 `OpenXrControllerSource` 实际使用的名字逐个解析控件类型 | 提前抓"名字拼错/大小写/类型不符" |
+
+输出按 1.2 KB 分块（`[INSYS#n]` 前缀），规避 logcat 单行 4 KB 上限。
+
+### 11.2 实测结果：设备在，左右都注册了
+
+同一进程、同一帧的真实输出（节选）：
+
+```
+InputSystem.devices.Count = 58
+[IS] layout=XRInputV1::OpenXR::HeadTrackingOpenXR | name=Head Tracking - OpenXR | id=61 | usages=(none)
+[IS] layout=XRInputV1::PICO::PICO4UltraTouchControllerOpenXR | name=... (OpenXR) | id=62 | usages=LeftHand
+[IS] layout=XRInputV1::PICO::PICO4UltraTouchControllerOpenXR | name=... OpenXR  | id=63 | usages=RightHand
+```
+
+关键在于 `usages` 里带 `LeftHand` / `RightHand` —— 这是**按手区分设备**的唯一可靠依据，
+比按 `displayName` 里有没有 "Left" 靠谱得多（两个设备 displayName 完全相同）。
+
+三路取证的对照：
+
+| 对象 | Input System `isTracked` | `trackingState` | `devicePosition` | 旧 API | 结论 |
+|---|---|---|---|---|---|
+| HMD id=61 | — | — | `(-0.19,0.52,-0.84)` | `valid=True`，位姿一致 | 6DoF 正常 |
+| 左手柄 id=62 | `0` | `0` | `(0.00,0.00,0.00)` | `valid=True`，`pos=(0,0,0)` | **设备在，但未跟踪** |
+| 右手柄 id=63 | `1` | `15` | `(0.00,1.65,0.00)` | `valid=True`，`pos=(0,1.65,0)` | 设备在，已跟踪，但位姿钉在头的位置 |
+
+`batterylevel` 也印证了同一件事：左手 `0`、右手 `3`。
+
+### 11.3 结论一：旧 API 并非失效，但缺三样东西
+
+§10.4 原来的判断需要更正。旧版 `UnityEngine.XR.InputDevices` 在本环境下 **`isValid = true`**，
+设备名、厂商（`PICO`）、特征位（`HeldInHand, TrackedDevice, Controller, Left/Right`）全部正确。
+
+它真正缺的是：
+
+| 缺什么 | 影响哪个功能 |
+|---|---|
+| `isTracked` | 无法区分"手柄放在桌上"与"手柄被握住但在原点" → 抓杆会误触发 |
+| `trackingState`（`15` = orientation+position+velocity 全有效） | 无法做跟踪质量降级 |
+| `devicePose.angularVelocity` | 无法做挥砍/助推的手势动量判定 |
+
+所以**改 Input System 的决策不变，归因必须改**：不是"读不到"，而是"读得到但信息不够"。
+
+### 11.4 结论二：模拟器不能产生手柄输入，这是能力边界
+
+模拟器给了一个"已跟踪但位置固定在 HMD 同点"的右手柄占位体，**任何操作都不会改变它**：
+
+- `adb shell input keyevent` 只能喂到 `Keyboard` 设备，喂不到 OpenXR 手柄；
+- PICO 的 2D 面板在 `VirtualDisplay`（touch NONE）上，物理触摸不映射（§10.5 已记过）；
+- 没有可用的 `pxrcontrollerservice` 伪造入口（`Failed to transaction`）。
+
+**这意味着**：M3 的"代码路径"可以在模拟器上验完（设备发现、控件解析、通道映射），
+但"手柄动起来"必须在真机上验。这条边界写进 `Docs/PICO模拟器能力边界与用法.md` 的同类条目，
+排期上不能把它当"应该能行"。
+
+### 11.5 交付物
+
+| 文件 | 作用 |
+|---|---|
+| `Core/Inputs/InputSystemProbe.cs` | 运行时设备树探针，`Enabled` 常量可一键关掉 |
+| `Core/Inputs/OpenXrControllerSource.cs` | Input System 版 6DoF 手柄源，实现 `IInputSource`，8 通道映射与旧源一一对应 |
+| `Core/Platform/PlatformBootstrap.cs` | 装配顺序改为 Input System 源在前、旧源在后作降级 |
+| `Editor/PlatformAudit.cs` | 审计路由与运行时装配保持同序，否则审计结论会对不上 |
+| `Core/Render/XrStatus.cs` | HUD 手柄行换成 Input System 版，多出 `T/-`（isTracked）、摇杆与扳机连续值 |
+
+HUD 实测（`Docs/参照/openxr/M3_01_InputSystem手柄状态.png`）：
+
+```
+L hand(IS): - (0.00,0.00,0.00) trig=0.00 grip=0.00 stick=0.0/0.0
+R hand(IS): T (0.00,1.65,0.00) trig=0.00 grip=0.00 stick=0.0/0.0
+```
+
+### 11.6 三个新踩的坑
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 探针一行日志都没有，且无法判断是"没被调用"还是"抛异常" | 第一版把延迟输出的 `MonoBehaviour` 写成**私有嵌套类** | 改成顶层 `internal sealed class`；并在进入方法时立刻打 `MARK`、`Dump` 用 try/catch 包住。改完立刻暴露出下面第二个坑 |
+| `InvalidOperationException: Expected control 'thumbstick' to be of type 'ButtonControl' but is of type 'StickControl'` | `TryGetChildControl<T>` 在**控件存在但类型不符时抛异常**，不是返回 null | 先 `TryGetChildControl(name)` 取 `InputControl`，再 `as T`。一个探测动作不应该有打断调用方的杀伤力 |
+| `InputDevice` / `CommonUsages` 编译报 CS0104 二义性 | `UnityEngine.InputSystem` 与 `UnityEngine.XR` 有同名类型 | 文件头用 `using XRDevice = ...` / `XRCommonUsages = ...` 别名钉死 |
+
+另有一条**好消息**：控件路径在 dump 里是全小写（`primarybutton`），而代码里按驼峰
+（`primaryButton`）取 —— 自检证明**8/8 全部命中**，说明 `TryGetChildControl` 的名字匹配
+大小写不敏感。这条不实测就永远是个"真机上 A 键按不出来"的悬案。
+
+### 11.7 顺手挖出的两件事：装配根不在场景里 + 优先级反了
+
+**一、`PlatformBootstrap` 从来没被放进过场景。**
+
+`PlatformBootstrap` 的类注释写着"没有它，各子系统都只是躺着的类 —— 这正是不做这个组件的典型后果"，
+而事实上就是这样：界面/音频/输入/预算/跟踪五个子系统写了、编译过、但从没在设备上跑过。
+输入路由虽然接了线，却没有 `Update` 去 `Tick` 它。
+
+修法：在 `BuildXrApk.BuildScene()` 里创建 `PLATFORM_Bootstrap`，并注入 `viewpoint = 主相机`。
+放在场景最后创建——它 `Awake` 里要 `FindAnyObjectByType` 找相机与各策略组件，先有它们再找才成立。
+
+修完的设备日志（首次出现，此前从未有过）：
+
+```
+[SteelRidge] 平台能力已装载：PICO 4（不透明 VR）｜OpaqueVR｜96×62°｜20 PPD｜Controller6DoF, EyeTracking｜尺度 WorldMetric
+[SteelRidge] GroundAnchor 装配：VirtualStatic，眼高 1.15 m
+[SteelRidge] DisplayPolicy：Opaque｜黑板 允许｜后处理 允许｜自发光 ≤8.0
+[SteelRidge] 音频后端：Unity Spatializer（spatialBlend 0.80，远场 25 m）
+[SteelRidge] 性能预算：VRStandalone｜90万面 / 200 DC / 40 材质 / 5 面板 / 11.1 ms
+[SteelRidge] 跟踪质量监控：来源 未接入｜门槛 跟踪可用率 ≥98% …
+```
+
+**二、输入源优先级是反的，导致审计给出一句误导性结论。**
+
+装配根一上线，审计输出是：
+
+```
+[OK] Trigger ← Keyboard/Mouse        ← 8 个通道全是这一句
+```
+
+原因是 `KeyboardDebugSource` 被注册在第一位。`InputRouter.Audit()` 报的是**优先级首位的源**，
+所以这行字在 VR 平台上会被读成"手柄没接上"，而实际上手柄早就注册好了。
+运行期行为没错（键盘源只在真按键时才返回 true），错的是它作为**报告**的语义。
+
+修法：顺序改成「手柄 → 手部 → 注视 → 键盘兜底」。编辑器里 `Caps.Has6DoFController` 为 false，
+手柄源根本不注册，键盘仍然独占全部通道，调试体验不变。修完：
+
+```
+[OK] SteerYaw    ← OpenXR Controller (InputSystem)
+[OK] SteerPitch  ← OpenXR Controller (InputSystem)
+[OK] Throttle    ← OpenXR Controller (InputSystem)
+[OK] Trigger     ← OpenXR Controller (InputSystem)
+[OK] Grip        ← OpenXR Controller (InputSystem)
+[OK] Boost       ← OpenXR Controller (InputSystem)
+[OK] Menu        ← OpenXR Controller (InputSystem)
+[OK] PanelSelect ← OpenXR Controller (InputSystem)
+```
+
+> 这两件事的共同点：**代码正确 ≠ 系统在跑**。前者是"写了没接"，后者是"接了但报告在撒谎"。
+> 都属于只有把装配根真正放进场景、并且肯读设备日志才会暴露的问题。
+
+### 11.8 现在的位置
+
+| 里程碑 | 状态 |
+|---|---|
+| M1 渲染与位姿 | ✅ 四条验收有运行时硬证据（§10.1） |
+| M2 相机与空间层 | 未开始 |
+| M3 输入层 | 🟡 代码路径打通并取证；物理输入信号需真机 |
+| M4 座舱 | 未开始（world-space Canvas 底座已就绪） |
+| URP 14 升级 | ✅ 已落地（14.0.12，走编辑器内置包，不经 registry），见 §12 |
+
+---
+
+## 12 URP 迁移落地记录（2026-11-11 下半场）
+
+> 结论：**URP 14.0.12 已装好并出包验证通过**，M1 四条验收在 URP 下依然成立。
+> 关键转折是「URP 从哪来」这一问的答案——不是代理，也不是服务器中转，而是**编辑器自带**。
+
+### 12.1 三次取证的结论演进
+
+| 轮次 | 假设 | 取证 | 结论 |
+|---|---|---|---|
+| ① | 本地被 GeoIP 分发到裁剪镜像 | `packages.unity.com` → `8.233.179.0`；索引 45 个版本、最高 `10.10.1`；`/14.0.11` 单版本 404 | 本地拿不到 |
+| ② | 换境外出口就行（Oracle 服务器中转） | 在 `217.142.246.70` 上同样解析到 **`8.233.179.0`**，索引同样 `total 45` / `has14 []` | **不是地区问题**，这份 CDN 索引本身就没有 14.x —— 服务器中转这条路不成立 |
+| ③ | 编辑器里可能已经带了 | `Unity.app/Contents/Resources/PackageManager/BuiltInPackages/` 下有 `com.unity.render-pipelines.universal` **14.0.12**（+ `core` 14.0.12 / `shadergraph` 14.0.12 / `universal-config` 14.0.10） | ✅ UPM 直接链接内置包，**离线解析**，不需要任何网络 |
+
+**方法论上的教训**：前两轮把「拿不到」归因于线路，第三轮才想到查本地安装目录。遇到「包管理器 404」，除了换网络，还要问一句「这个版本的包是不是本来就随编辑器发的」。
+
+### 12.2 实际改了什么
+
+| 文件 | 改动 |
+|---|---|
+| `Packages/manifest.json` | 加 4 个依赖：`universal`/`core`/`shadergraph` = 14.0.12，`universal-config` = 14.0.10（版本号必须与内置包**完全一致**，否则 UPM 会转去 registry） |
+| `Assets/_Project/Scripts/Editor/Urp/SteelSpine.Editor.Urp.asmdef` | `references` 从空补成 4 个 URP/Core 程序集。**此前 URP 没装，引用留空**，装好后才暴露 `CS0246 UniversalRenderPipelineAsset` |
+| `SetupUrp.cs` | ①「提取内嵌材质」改为「统一材质到 URP/Lit」；②`supportsSoftShadows` 走 `SerializedObject`；③新增 `Probe()` 只读探针 |
+| `BuildXrApk.cs` | 地面材质不再 `Shader.Find("Standard")`，改为按当前管线选 shader 并落成**真实 .mat 资产** |
+| `scripts/install_urp.sh` | 重写：内置包优先、registry 降级兜底；`--probe-only` / `--registry` 两个开关 |
+| `PerfBudget.cs` | 不再对不可读 mesh 读 `triangles`（见 12.4 坑 ③） |
+| `XrStatus.cs` | HUD 增加 `Pipeline` 行：管线名 + `clearFlags` + 背景色 + MSAA |
+
+### 12.3 设备端硬证据
+
+`Docs/参照/openxr/M1_02_URP.png`（2160×2158），HUD 同步打进 logcat：
+
+```
+XR active : True   runtime: OpenXR Display
+Stereo    : SinglePassMultiview   eye: Both
+Pipeline  : URP_Asset(UniversalRenderPipelineAsset)  clear=SolidColor bg=0.00/0.00/0.00 a=1.00 MSAA=on
+Eye tex   : 1920x1920 vol=2 fmt=R8G8B8A8_UNorm
+Screen    : 1080x1920   frame: 728   fps: 6
+HMD pose  : (-7.48,-7.71,1.07)
+Cam world : (-7.48,-7.71,1.07)
+```
+
+四条验收在 URP 下的对应关系：
+
+| 验收 | 证据 |
+|---|---|
+| immersive 会话 | `XR active: True｜runtime: OpenXR Display` |
+| 双眼立体 | `Stereo: SinglePassMultiview` + `Eye tex 1920x1920 vol=2` |
+| 位姿由 OpenXR 驱动 | `HMD pose` 与 `Cam world` 完全相等 |
+| 3D 内容可见 | 机体 242 个零件正常着色（白/蓝/红装甲），**无洋红**——洋红是 URP 下仍用 Standard shader 的典型症状，这里没有 |
+
+### 12.4 这次踩的四个坑
+
+**① `supportsSoftShadows` 是 internal set（CS0200）**
+URP 14 里它是 `public get + internal set`，外部程序集赋值直接编译失败。只能 `new SerializedObject(asset).FindProperty("m_SoftShadowsSupported")` 改底层字段。为什么非要关：MSAA 4× 与 PCF 软阴影叠加在移动 GPU 上实测吃掉 3–4 ms，而座舱内景只有机甲自遮挡一路阴影。
+
+**② `AssetDatabase.Contains(嵌入材质)` 返回 true，导致提取静默跳过**
+原版靠它判断「材质是否已在资产库里，在就跳过提取」。但**模型内嵌的子资产也算"已在"**，于是 242 个 renderer 的 11 个材质全部被 `continue` 掉：函数返回 0、零条日志，看起来像"模型没有材质"。真正的事实要用探针才看得见（`LoadAllAssetsAtPath` 列出 11 个 `Material` 子资产）。
+更关键的是：**URP 成为默认管线后，模型重新导入时导入器直接生成 URP/Lit 内嵌材质**，提取这一步本来就不必要。所以改成「外部 .mat + 内嵌材质一起过一遍，非 URP/Lit 就地转换」。
+
+**③ 不可读 mesh 读 `triangles` → 每帧 242 条 E/Unity**
+`PerfBudgetEnforcer` 统计三角面时直接 `mesh.triangles`，而 FBX 默认 Read/Write off。结果是**每个零件刷一条错误**：真实报错被埋、logcat 被冲掉。改为 `isReadable` 判定 + 顶点数近似（`vertexCount/2`，box 类零件 24 顶点/12 三角形正好吻合），并只警告一次。
+
+**④ 快门瞬间的两个"假故障"，都不是 URP 的错**
+- **背景纯黑**：`DisplayPolicy.Apply()` 对不透明 VR 会主动 `backgroundColor = Color.black`（`Constraints.AllowBlackBackground`）。这是策略，不是清屏失效——HUD 里把 `clear`/`bg` 打出来就是为了能当场分辨。
+- **地面消失**：模拟器给出的 HMD pose 是 `y = -7.71`，相机在地面以下，单面 `Plane` 从背面被剔除。**是模拟器位姿的能力边界，不是渲染问题**（§11.4 已记录同源问题）。
+
+### 12.5 现在的性能位置
+
+| 指标 | 值 | 说明 |
+|---|---|---|
+| 构建耗时 | 29.8 s（增量）/ 121 s（首次含 shader 变体） | URP 首次导入要编译变体 |
+| APK | 36 MB | 与 Built-in 版同量级 |
+| 编译警告 | 32 → 9 | 清掉的是 PerfBudget 的 242 条 mesh 错误带来的连锁 |
+| 设备帧率 | 6 fps | 模拟器 GL 软光栅 + 1920×1920×2 + MSAA 4×，**不能作为真机判断** |
+
+MSAA 4× 是 `SetupUrp` 里的起步基线（`TuneAsset`），真机帧率出来后再调；若 90 fps 不达标，第一刀砍 `msaaSampleCount → 2`，第二刀砍 `renderScale`。
 
 ---
 

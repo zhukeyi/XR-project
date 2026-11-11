@@ -63,3 +63,6 @@ venv/
 .DS_Store
 ._*
 Thumbs.db
+
+# ---- 脚本自建备份（install_urp.sh 等）----
+PICO_Mecha_Starter/Packages/manifest.json.bak-*
