@@ -1,0 +1,453 @@
+{
+  "schema_version": "1.0",
+  "contract_id": "controls_map_v1",
+  "status": "draft",
+  "date": "2026-11-16",
+  "source_doc": "docs/玩法_机械感作战三机制.md",
+  "platform": "PICO OpenXR",
+  "posture": "seated_cockpit",
+  "control_layout": "asymmetric_hand",
+  "hardware": {
+    "left": {
+      "form": "cradle_semi_fixed",
+      "mount": "seat_left_armrest",
+      "retention": {
+        "type": "magnet",
+        "detach_force_n": 3.0,
+        "spring_pushout_mm": 2.0,
+        "auto_return": true
+      },
+      "fixed_axes": ["pitch", "roll"],
+      "free_axes": ["lift"],
+      "lift_range_mm": [0, 80],
+      "notes": "lift 幅度直接映射举盾高度，松手由弹簧回中"
+    },
+    "right": {
+      "form": "two_segment_linkage",
+      "mount": "seat_right_front",
+      "base_offset_from_seat_center_mm": {
+        "lateral": 350,
+        "height_above_seat": 250,
+        "forward": 120
+      },
+      "segment_1": {
+        "joint": "ball",
+        "damping_nm": 0.15,
+        "travel_deg": 60
+      },
+      "segment_2": {
+        "joint": "hinge",
+        "linear_extension_mm": 45
+      },
+      "locks": [
+        {
+          "id": "lock_A",
+          "location": "segment_2_hinge",
+          "type": "solenoid",
+          "holding_force_n": 5.0,
+          "power_state_when_locked": "energized",
+          "fail_safe": "de_energize_to_release",
+          "release_time_ms": 200
+        },
+        {
+          "id": "lock_B",
+          "location": "base_turntable",
+          "type": "solenoid",
+          "holding_force_n": 5.0,
+          "power_state_when_locked": "energized",
+          "fail_safe": "de_energize_to_release",
+          "release_time_ms": 200
+        }
+      ],
+      "retention": {
+        "type": "magnet",
+        "detach_force_n": 3.0,
+        "spring_pushout_mm": 2.0,
+        "auto_return": true
+      }
+    }
+  },
+  "lever_positions": [
+    {
+      "id": "POS_GUN",
+      "label": "光枪态",
+      "lock_A": "locked",
+      "lock_B": "semi_locked",
+      "cone_deg": 15,
+      "arm_mm": 60,
+      "purpose": "稳定瞄准"
+    },
+    {
+      "id": "POS_SHIELD_AIM",
+      "label": "盾控态",
+      "lock_A": "locked",
+      "lock_B": "released",
+      "cone_deg": 30,
+      "arm_mm": 78,
+      "purpose": "控制盾面朝向"
+    },
+    {
+      "id": "POS_SABER",
+      "label": "光剑态",
+      "lock_A": "released",
+      "lock_B": "released",
+      "cone_deg": 60,
+      "arm_mm": 105,
+      "purpose": "挥砍与格挡"
+    }
+  ],
+  "equipment_slots": {
+    "right": ["gun", "saber"],
+    "left": ["shield"],
+    "notes": "盾牌不占用右手槽位；盾由左臂承载，右手在盾控态时控制其朝向"
+  },
+  "states": [
+    "left_cradle_default",
+    "left_cradle_shield",
+    "right_on_lever",
+    "right_off_lever"
+  ],
+  "input_map": [
+    {
+      "id": "move_thrust",
+      "label": "推力",
+      "hand": "left",
+      "states": ["left_cradle_default", "left_cradle_shield"],
+      "binding": {"source": "thumbstick_left", "axis": "y"},
+      "type": "continuous",
+      "interrupts": []
+    },
+    {
+      "id": "attitude_trim",
+      "label": "姿态微调",
+      "hand": "left",
+      "states": ["left_cradle_default"],
+      "binding": {"source": "thumbstick_left", "axis": "x"},
+      "type": "continuous",
+      "interrupts": []
+    },
+    {
+      "id": "raise_shield",
+      "label": "举盾",
+      "hand": "left",
+      "states": ["left_cradle_default"],
+      "binding": {"source": "grip_left", "combo": "cradle_lift"},
+      "type": "position_hold",
+      "duration_ms": 0,
+      "feedback": ["hydraulic", "camera_drop_800mm"],
+      "interrupts": ["drop_weapon"]
+    },
+    {
+      "id": "shield_angle",
+      "label": "盾面角",
+      "hand": "left",
+      "states": ["left_cradle_shield"],
+      "binding": {"source": "thumbstick_left", "axis": "x"},
+      "type": "continuous",
+      "range_deg": [-33, 33],
+      "interrupts": []
+    },
+    {
+      "id": "switch_weapon_left",
+      "label": "左手武器切换",
+      "hand": "left",
+      "states": ["left_cradle_default"],
+      "binding": {"source": "button_X", "edge": "press"},
+      "type": "discrete",
+      "interrupts": []
+    },
+    {
+      "id": "drop_shield",
+      "label": "弃盾",
+      "hand": "left",
+      "states": ["left_cradle_shield"],
+      "binding": {"source": "grip_left", "edge": "double_press"},
+      "type": "discrete",
+      "haptic": "haptic_left_double",
+      "interrupts": []
+    },
+    {
+      "id": "drop_weapon",
+      "label": "丢弃发热武器",
+      "hand": "both",
+      "states": ["right_off_lever", "right_on_lever"],
+      "binding": {"source": "grip_left", "combo": "right_flick_forward"},
+      "type": "gesture",
+      "windup_ms": 400,
+      "haptic": "haptic_left_single",
+      "irreversible": true,
+      "interrupts": ["raise_shield"],
+      "blocked_reason_if_shield_raised": "挂点被占用"
+    },
+    {
+      "id": "turn_body",
+      "label": "机体转向",
+      "hand": "right",
+      "states": ["right_on_lever"],
+      "binding": {"source": "thumbstick_right", "axis": "x"},
+      "type": "continuous",
+      "interrupts": []
+    },
+    {
+      "id": "switch_equipment",
+      "label": "装备切换",
+      "hand": "right",
+      "states": ["right_on_lever", "right_off_lever"],
+      "binding": {"source": "button_A", "edge": "press"},
+      "type": "discrete",
+      "cooldown_ms": 400,
+      "cycle": ["gun", "saber"],
+      "haptic": "haptic_switch_signature",
+      "interrupts": []
+    },
+    {
+      "id": "reactor_low_power",
+      "label": "反应堆降功率",
+      "hand": "right",
+      "states": ["right_on_lever", "right_off_lever"],
+      "binding": {"source": "button_B", "edge": "long_press"},
+      "hold_ms": 1500,
+      "type": "discrete",
+      "interrupts": ["fire_primary", "swing_saber"]
+    },
+    {
+      "id": "reactor_restore",
+      "label": "降功率恢复",
+      "hand": "right",
+      "states": ["right_on_lever", "right_off_lever"],
+      "binding": {"source": "button_B", "edge": "press"},
+      "type": "discrete",
+      "blocked_duration_ms": 6000,
+      "interrupts": []
+    },
+    {
+      "id": "fire_primary",
+      "label": "开火",
+      "hand": "right",
+      "states": ["right_on_lever", "right_off_lever"],
+      "binding": {"source": "trigger_right"},
+      "type": "continuous",
+      "requires_equipment": "gun",
+      "haptic": "haptic_gun_recoil",
+      "interrupts": ["switch_equipment", "reactor_low_power"]
+    },
+    {
+      "id": "detach_hand",
+      "label": "右手脱出",
+      "hand": "right",
+      "states": ["right_on_lever"],
+      "binding": {"source": "physical_pull", "force_n": 3.0},
+      "type": "position",
+      "interrupts": []
+    },
+    {
+      "id": "attach_hand",
+      "label": "右手回杆",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "proximity_to_cradle", "radius_mm": 40},
+      "type": "position",
+      "blocked_duration_ms": 500,
+      "interrupts": []
+    },
+    {
+      "id": "raise_scope",
+      "label": "开镜",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "hud_proximity_sphere", "radius_m": 0.25},
+      "type": "position",
+      "requires_equipment": "gun",
+      "interrupts": ["raise_shield"]
+    },
+    {
+      "id": "aim_fine",
+      "label": "精瞄",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "thumbstick_right", "axis": "x"},
+      "type": "continuous",
+      "sensitivity_deg_per_frame": 0.15,
+      "requires_state": "scope_active"
+    },
+    {
+      "id": "focus_range",
+      "label": "对焦测距",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "thumbstick_right", "axis": "y"},
+      "type": "continuous",
+      "full_travel_ms": 1200,
+      "range_m": [200, 4000],
+      "requires_state": "scope_active"
+    },
+    {
+      "id": "hold_breath",
+      "label": "屏息稳定",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "grip_right", "edge": "light_press"},
+      "type": "hold",
+      "steady_ms": 3000,
+      "penalty_ms": 4000,
+      "penalty_multiplier": 2.0,
+      "requires_state": "scope_active"
+    },
+    {
+      "id": "swing_saber",
+      "label": "挥砍",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "motion", "axes": ["start_position", "direction", "speed"]},
+      "type": "gesture",
+      "requires_equipment": "saber",
+      "min_speed_mps": 1.2,
+      "assist_arc_deg": 78,
+      "assist_duration_ms": 280,
+      "angle_tolerance_deg": 25,
+      "haptic": "haptic_saber_hum"
+    },
+    {
+      "id": "block_saber",
+      "label": "格挡",
+      "hand": "right",
+      "states": ["right_off_lever"],
+      "binding": {"source": "motion", "axes": ["blade_axis"]},
+      "type": "posture",
+      "requires_equipment": "saber",
+      "angle_tolerance_deg": 35
+    }
+  ],
+  "stick_semantics": [
+    {
+      "state": "right_on_lever",
+      "left_x": "attitude_trim",
+      "left_y": "move_thrust",
+      "right_x": "turn_body",
+      "right_y": "unused_reserved"
+    },
+    {
+      "state": "left_cradle_shield",
+      "left_x": "shield_angle",
+      "left_y": "move_thrust_scaled_0_40",
+      "right_x": "turn_body",
+      "right_y": "unused_reserved"
+    },
+    {
+      "state": "right_off_lever_scope",
+      "left_x": "attitude_trim",
+      "left_y": "move_thrust",
+      "right_x": "aim_fine",
+      "right_y": "focus_range"
+    },
+    {
+      "state": "low_power",
+      "left_x": "attitude_trim",
+      "left_y": "move_thrust_scaled_0_30",
+      "right_x": "turn_body",
+      "right_y": "unused_reserved"
+    }
+  ],
+  "haptics": [
+    {
+      "id": "haptic_gun_recoil",
+      "hand": "right",
+      "pattern": "pulse",
+      "duration_ms": 80,
+      "frequency_hz": 180,
+      "trigger": "fire_primary"
+    },
+    {
+      "id": "haptic_saber_hum",
+      "hand": "right",
+      "pattern": "continuous_sine",
+      "frequency_hz": 40,
+      "amplitude_follows": "swing_speed",
+      "trigger": "equipment==saber"
+    },
+    {
+      "id": "haptic_left_single",
+      "hand": "left",
+      "pattern": "pulse",
+      "duration_ms": 120,
+      "trigger": "drop_weapon"
+    },
+    {
+      "id": "haptic_left_double",
+      "hand": "left",
+      "pattern": "double_pulse",
+      "duration_ms": 90,
+      "gap_ms": 80,
+      "trigger": "drop_shield"
+    },
+    {
+      "id": "haptic_switch_signature",
+      "hand": "right",
+      "pattern": "pulse",
+      "duration_ms": 150,
+      "frequency_hz": 90,
+      "trigger": "switch_equipment"
+    },
+    {
+      "id": "haptic_safety_proximity",
+      "hand": "right",
+      "pattern": "pulse",
+      "duration_ms": 60,
+      "frequency_hz": 220,
+      "trigger": "distance_to_seat_collider_mm < 80",
+      "effect": "damping_0_6"
+    }
+  ],
+  "mutex": [
+    {
+      "pair": ["raise_shield", "drop_weapon"],
+      "behavior": "block_second",
+      "reason": "左 Grip 被举盾占用",
+      "design_intent": "刻意保留的真实约束：举盾时无第三只手去丢弃发热武器"
+    },
+    {
+      "pair": ["raise_shield", "raise_scope"],
+      "behavior": "block_second",
+      "reason": "双手占用"
+    },
+    {
+      "pair": ["fire_primary", "swing_saber"],
+      "behavior": "block_second",
+      "reason": "装备槽互斥"
+    },
+    {
+      "pair": ["reactor_low_power", "fire_primary"],
+      "behavior": "block_second",
+      "reason": "降功率期间主动系统下线"
+    }
+  ],
+  "geometry_assertions": [
+    "所有位置 cone_deg 与 arm_mm 的乘积所生成扇面，其最远点至头部中心距离必须大于 700 mm",
+    "光剑态杆端最大位移 = 2 * arm_mm * sin(cone_deg) = 182 mm (允许 ±10 mm)",
+    "光剑态总挥砍弧长 ≈ 0.40 m，完成时间 0.28 s，峰值切线速度 ≥ 1.2 m/s 判定阈值",
+    "任一位置扇面不得覆盖座面中线左侧 100 mm 以内区域"
+  ],
+  "hardware_assertions": [
+    "lock_A 与 lock_B 均为断电释放（fail_safe = de_energize_to_release），禁止反向实现",
+    "断电后 200 ms 内两锁必须释放，实测值写入 validation_report",
+    "磁吸分离力 3.0 ± 0.5 N，500 次插拔后衰减不超过 20%",
+    "手柄座装配后，穿厚度 25 mm 外套连续挥砍 60 s 不得产生手、连杆、座椅三者干涉"
+  ],
+  "disabled_features": [
+    {
+      "feature": "finger_skeletal_input",
+      "reason": "PICO 控制器无骨骼输入，Grip 为二值",
+      "replacement": "按住/松开 + 震动与音效补偿"
+    },
+    {
+      "feature": "two_handed_weapon_hold",
+      "reason": "坐姿舱内空间不足，双手会穿模",
+      "replacement": "单手举镜 + 头瞄 + 摇杆精瞄"
+    },
+    {
+      "feature": "wrist_micro_rotation_aim",
+      "reason": "持续扭转手腕 30 s 产生酸痛",
+      "replacement": "摇杆微调，手腕仅承担举镜"
+    }
+  ]
+}
